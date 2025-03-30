@@ -1,9 +1,13 @@
 +++
 title = "rustc浅析: Unsafety Checking"
-date = 2024-12-15
+date = "2024-12-15"
+taxonomies.tags = [
+    "Rust",
+    "Compiler",
+]
 +++
 
-**这一步检查的实现位于[`[check_unsafety.rs](https://github.com/rust-lang/rust/blob/master/compiler/rustc_mir_build/src/check_unsafety.rs)`](https://github.com/rust-lang/rust/blob/master/compiler/rustc_mir_build/src/check_unsafety.rs)。**
+**这一步检查的实现位于[check_unsafety.rs](https://github.com/rust-lang/rust/blob/master/compiler/rustc_mir_build/src/check_unsafety.rs)。**
 
 ## 引入
 

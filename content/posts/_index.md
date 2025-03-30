@@ -1,5 +1,7 @@
 +++
+paginate_by = 7
 title = "Posts"
 sort_by = "date"
-weight = 0
+
+insert_anchor_links = "heading"
 +++
