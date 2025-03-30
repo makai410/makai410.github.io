@@ -1,10 +1,13 @@
 +++
 title = "About"
 path = "about"
+
+[extra]
+local_image = "/avatar.png"
 +++
 
 # Makai - he/him
-<div align="left"><img src="avatar.png" width="15%"></div>
+<div align="left"><img src="/avatar.png" width="15%"></div>
 
 Hi👋 I write code to the Rust compiler, currently working on [StableMIR](https://github.com/rust-lang/project-stable-mir). I like #66b395 (the primary color in this website).
 
