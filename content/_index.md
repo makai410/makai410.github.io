@@ -6,5 +6,5 @@ template = "homepage.html"
 local_image = "/avatar.png"
 +++
 
-# Hi👋 Ciao👋 Hola👋 你好👋 Ciallo～(∠・ω< )
+# Hi👋 Ciao👋 Hola👋 你好👋
 <div align="left"><img src="/avatar.png" width="20%"></div>

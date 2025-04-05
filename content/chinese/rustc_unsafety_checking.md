@@ -4,6 +4,7 @@ date = "2024-12-15"
 taxonomies.tags = [
     "Rust",
     "Compiler",
+    "Chinese",
 ]
 +++
 

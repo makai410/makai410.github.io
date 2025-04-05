@@ -3,6 +3,7 @@ title = "浅析一下Java FFM API(Project Panama)"
 date = "2023-08-05"
 taxonomies.tags = [
     "JVM",
+    "Chinese",
 ]
 +++
 
