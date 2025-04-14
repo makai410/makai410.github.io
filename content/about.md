@@ -3,7 +3,8 @@ title = "About"
 path = "about"
 +++
 
-# Makai /ma ka e/ - he/him
+# Makai (MAH-kah-ee)
+- he/him
 
 I write code to the Rust compiler, currently working on [StableMIR](https://github.com/rust-lang/project-stable-mir).
 
