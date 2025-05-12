@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en" class="dark light">
+
+    <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="base" content="https:&#x2F;&#x2F;makai410.dev">
+
+    
+
+    
+    
+    
+        <title>
+            
+                rustc浅析: Unsafety Checking
+            
+        </title>
+
+        
+            <meta property="og:title"
+                  content="rustc浅析: Unsafety Checking" />
+        
+    
+
+    
+        
+    
+
+    
+        
+    
+
+    
+    
+
+    
+    
+        <link href=https://makai410.dev/fonts.css rel="stylesheet" />
+    
+
+    
+    
+
+    
+    <script src=https://makai410.dev/js/codeblock.js></script>
+
+    
+    
+
+    
+    
+        <script src=https://makai410.dev/js/note.js></script>
+    
+
+    
+        
+            <script>
+            MathJax = {
+              tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+              }
+            };
+            </script>
+        
+        <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+        </script>
+    
+
+    
+    <link rel="alternate"
+          type="application/atom+xml"
+          title="Makai"
+          href="https://makai410.dev/atom.xml">
+
+
+    
+    
+        <link rel="stylesheet"
+              type="text/css"
+              href="https://makai410.dev/theme/dark.css" />
+    
+
+    <!-- Set the correct theme in the script -->
+
+    
+
+
+    <link rel="stylesheet"
+          type="text/css"
+          media="screen"
+          href="https://makai410.dev/main.css" />
+
+    
+
+    
+        <script defer
+                src="https://makai410.dev/js/searchElasticlunr.min.js?h=3626c0ef99daa745b31e"></script></head>
+
+
+    <body>
+        <div class="content">
+            <header>
+    <div class="main">
+        
+            <a href=https:&#x2F;&#x2F;makai410.dev>Makai</a>
+        
+
+
+        <div class="socials">
+            
+                <a rel="me" href="https:&#x2F;&#x2F;hachyderm.io&#x2F;@makai410" class="social">
+                    <img alt="hachyderm"
+                         src="https://makai410.dev/icons/social/mastodon.svg">
+                </a>
+            
+                <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;makai410&#x2F;" class="social">
+                    <img alt="github"
+                         src="https://makai410.dev/icons/social/github.svg">
+                </a>
+            
+        </div>
+    </div>
+
+    <nav>
+        
+            <a href=https://makai410.dev/english style="margin-left: 0.25em">&#x2F;posts[English]</a>
+        
+            <a href=https://makai410.dev/chinese style="margin-left: 0.25em">&#x2F;posts[Chinese]</a>
+        
+            <a href=https://makai410.dev/about style="margin-left: 0.25em">&#x2F;about</a>
+        
+            <a href=https://makai410.dev/tags style="margin-left: 0.25em">&#x2F;tags</a>
+        
+
+        
+            <button id="search-button"
+                    class="search-button"
+                    title="$SHORTCUT to open search">
+                <img src="https://makai410.dev/icons/search.svg"
+                     alt="Search"
+                     class="search-icon">
+            </button>
+
+            <div id="searchModal"
+                 class="search-modal js"
+                 role="dialog"
+                 aria-labelledby="modalTitle">
+                <div id="modal-content">
+                    <h1 id="modalTitle" class="page-header">Search</h1>
+                    <div id="searchBar">
+                        <input id="searchInput"
+                               role="combobox"
+                               autocomplete="off"
+                               spellcheck="false"
+                               aria-expanded="false"
+                               aria-controls="results-container"
+                               placeholder="Search..." />
+                        <button id="clear-search" class="clear-button" title="Clear search">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+                                <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="results-container">
+                        <div id="results-info">
+                            <span id="zero_results" style="display: none;">No results</span>
+                            <span id="one_result" style="display: none;">1 result</span>
+                            <span id="many_results" style="display: none;">$NUMBER results</span>
+                        </div>
+                        <div id="results" role="listbox"></div>
+                    </div>
+                </div>
+            </div>
+        
+
+        
+    </nav>
+</header>
+
+
+            
+            
+    
+    <main>
+        <article>
+            <div class="title">
+                
+                
+    <div class="page-header">
+        rustc浅析: Unsafety Checking<span class="primary-color" style="font-size: 1.6em">.</span>
+    </div>
+
+
+                <div class="meta">
+                    
+                        Posted on <time>2024-12-15</time>
+                    
+
+                    
+
+                    
+
+                    :: 514 Words
+
+                    
+                    
+                        <span class="tags-label">:: Tags:</span>
+                        <span class="tags">
+                                <a href="https://makai410.dev/tags/rust/"
+                                   class="post-tag">Rust</a>
+                                ,
+                            
+                                <a href="https://makai410.dev/tags/compiler/"
+                                   class="post-tag">Compiler</a>
+                                ,
+                            
+                                <a href="https://makai410.dev/tags/chinese/"
+                                   class="post-tag">Chinese</a>
+                                
+                            
+                        </span>
+                    
+
+                    
+                    
+
+                    
+
+                </div>
+            </div>
+
+            
+
+            
+            
+
+            <section class="body">
+                <p><strong>这一步检查的实现位于<a href="https://github.com/rust-lang/rust/blob/master/compiler/rustc_mir_build/src/check_unsafety.rs">check_unsafety.rs</a>。</strong></p>
+<h2 id="yin-ru"><a class="zola-anchor" href="#yin-ru" aria-label="Anchor link for: yin-ru">引入</a></h2>
+<p>Rust中，所有无法由类型系统证明正确性的代码（如裸指针的解引用），以及被<code>unsafe</code>修饰的<code>traits</code>，<code>functions</code>和<code>methods</code>，都被视为是unsafe的。这一部分的操作需要被放入<code>unsafe</code>块内。Unsafety Checking确保unsafe操作不被用于<code>unsafe</code>块之外。</p>
+<h2 id="thir"><a class="zola-anchor" href="#thir" aria-label="Anchor link for: thir">THIR</a></h2>
+<pre data-lang="shell" style="background-color:#282c34;color:#dcdfe4;" class="language-shell "><code class="language-shell" data-lang="shell"><span>-----------
+</span><span>Source Code
+</span><span>-----------
+</span><span>     |
+</span><span>-----------
+</span><span> Rust AST
+</span><span>-----------
+</span><span>     |
+</span><span>-----------
+</span><span>    HIR
+</span><span>-----------
+</span><span>     |
+</span><span>-----------
+</span><span>   THIR
+</span><span>-----------
+</span><span>     |
+</span><span>-----------
+</span><span>    MIR     &lt;-- Control Flow Graph
+</span><span>-----------
+</span></code></pre>
+<p>Unsafety Checking基于THIR，理由如下：</p>
+<ol>
+<li>和HIR相比，使用THIR需要考虑的情况更少。比如<code>unsafe function calls</code>和<code>unsafe method calls</code>在THIR中的表示是相同的。</li>
+<li>不用MIR是因为Unsafety Checking不需要控制流，并且对于一些表达式，MIR没有像THIR那么精确的span。</li>
+</ol>
+<h2 id="bian-ren-unsafecao-zuo"><a class="zola-anchor" href="#bian-ren-unsafecao-zuo" aria-label="Anchor link for: bian-ren-unsafecao-zuo">辨认unsafe操作</a></h2>
+<p>绝大部分的unsafe操作可以通过检查THIR中的<code>ExprKind</code>和检查参数类型来辨认。比如说想要辨认裸指针解引用的操作，可以通过检查具有裸指针参数的 <code>ExprKind::Deref</code>：</p>
+<p><code>UnsafeVisitor::visit_expr()</code>:</p>
+<pre data-lang="rust" style="background-color:#282c34;color:#dcdfe4;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#5c6370;">// https://github.com/rust-lang/rust/blob/master/compiler/rustc_mir_build/src/check_unsafety.rs#L538-L553
+</span><span>ExprKind::Deref { arg } </span><span style="color:#c678dd;">=&gt; </span><span>{
+</span><span>    </span><span style="color:#c678dd;">if let </span><span>ExprKind::StaticRef { def_id, </span><span style="color:#c678dd;">.. </span><span>} </span><span style="color:#c678dd;">| </span><span>ExprKind::ThreadLocalRef(def_id) </span><span style="color:#c678dd;">=
+</span><span>        </span><span style="color:#e06c75;">self</span><span>.thir[arg].kind
+</span><span>    {
+</span><span>        </span><span style="color:#c678dd;">if </span><span style="color:#e06c75;">self</span><span>.tcx.</span><span style="color:#61afef;">is_mutable_static</span><span>(def_id) {
+</span><span>            </span><span style="color:#e06c75;">self</span><span>.</span><span style="color:#61afef;">requires_unsafe</span><span>(expr.span, UseOfMutableStatic);
+</span><span>        } </span><span style="color:#c678dd;">else if </span><span style="color:#e06c75;">self</span><span>.tcx.</span><span style="color:#61afef;">is_foreign_item</span><span>(def_id) {
+</span><span>            </span><span style="color:#c678dd;">match </span><span style="color:#e06c75;">self</span><span>.tcx.</span><span style="color:#61afef;">def_kind</span><span>(def_id) {
+</span><span>                DefKind::Static { safety: hir::Safety::Safe, </span><span style="color:#c678dd;">.. </span><span>} </span><span style="color:#c678dd;">=&gt; </span><span>{}
+</span><span>                </span><span style="color:#c678dd;">_ =&gt; </span><span style="color:#e06c75;">self</span><span>.</span><span style="color:#61afef;">requires_unsafe</span><span>(expr.span, UseOfExternStatic),
+</span><span>            }
+</span><span>        }
+</span><span>    } </span><span style="color:#c678dd;">else if </span><span style="color:#e06c75;">self</span><span>.thir[arg].ty.</span><span style="color:#61afef;">is_unsafe_ptr</span><span>() {
+</span><span>        </span><span style="color:#e06c75;">self</span><span>.</span><span style="color:#61afef;">requires_unsafe</span><span>(expr.span, DerefOfRawPointer);
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h3 id="access-fields-of-a-union"><a class="zola-anchor" href="#access-fields-of-a-union" aria-label="Anchor link for: access-fields-of-a-union">Access fields of a <code>union</code></a></h3>
+<p>考虑以下代码：</p>
+<pre data-lang="rust" style="background-color:#282c34;color:#dcdfe4;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#e06c75;">repr</span><span>(C)]
+</span><span>union MyUnion {
+</span><span>    f1: </span><span style="color:#c678dd;">i32</span><span>,
+</span><span>    f2: </span><span style="color:#c678dd;">f32</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#c678dd;">fn </span><span style="color:#61afef;">foo</span><span>(</span><span style="color:#e06c75;">u</span><span>: MyUnion) {
+</span><span>  u.f1 </span><span style="color:#c678dd;">= </span><span style="color:#e5c07b;">6</span><span>;
+</span><span>  </span><span style="color:#c678dd;">let</span><span> f </span><span style="color:#c678dd;">= unsafe </span><span>{ u.f1 };
+</span><span>}
+</span></code></pre>
+<ul>
+<li>会发现，写入<code>u.f1</code>是safe的，而读取<code>u.f1</code>是unsafe的。</li>
+</ul>
+<p>因此检查器会允许union fields直接出现在赋值表达式的LHS，而其它情况全部报错。</p>
+<p>同时读取union fields的操作也会发生在模式匹配，因此那里也需要被检查器走一遍：</p>
+<p><code>UnsafeVisitor::visit_expr()</code>:</p>
+<pre data-lang="rust" style="background-color:#282c34;color:#dcdfe4;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#5c6370;">// https://github.com/rust-lang/rust/blob/master/compiler/rustc_mir_build/src/check_unsafety.rs#L623-L643
+</span><span>ExprKind::Field { lhs, variant_index, name } </span><span style="color:#c678dd;">=&gt; </span><span>{
+</span><span>    </span><span style="color:#c678dd;">let</span><span> lhs </span><span style="color:#c678dd;">= &amp;</span><span style="color:#e06c75;">self</span><span>.thir[lhs];
+</span><span>    </span><span style="color:#c678dd;">if let </span><span>ty::Adt(adt_def, </span><span style="color:#c678dd;">_</span><span>) </span><span style="color:#c678dd;">=</span><span> lhs.ty.</span><span style="color:#61afef;">kind</span><span>() {
+</span><span>    </span><span style="color:#c678dd;">if</span><span> adt_def.</span><span style="color:#61afef;">variant</span><span>(variant_index).fields[name].safety </span><span style="color:#c678dd;">== </span><span>Safety::Unsafe {
+</span><span>        </span><span style="color:#e06c75;">self</span><span>.</span><span style="color:#61afef;">requires_unsafe</span><span>(expr.span, UseOfUnsafeField);
+</span><span>        } </span><span style="color:#c678dd;">else if</span><span> adt_def.</span><span style="color:#61afef;">is_union</span><span>() {
+</span><span>            </span><span style="color:#c678dd;">if let </span><span>Some(assigned_ty) </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">self</span><span>.assignment_info {
+</span><span>                </span><span style="color:#c678dd;">if</span><span> assigned_ty.</span><span style="color:#61afef;">needs_drop</span><span>(</span><span style="color:#e06c75;">self</span><span>.tcx, </span><span style="color:#e06c75;">self</span><span>.typing_env) {
+</span><span>                    </span><span style="color:#5c6370;">// This would be unsafe, but should be outright impossible since we
+</span><span>                    </span><span style="color:#5c6370;">// reject such unions.
+</span><span>                    assert!(
+</span><span>                        </span><span style="color:#e06c75;">self</span><span>.tcx.</span><span style="color:#61afef;">dcx</span><span>().</span><span style="color:#61afef;">has_errors</span><span>().</span><span style="color:#61afef;">is_some</span><span>(),
+</span><span>                        </span><span style="color:#98c379;">&quot;union fields that need dropping should be impossible: {assigned_ty}&quot;
+</span><span>                    );
+</span><span>                }
+</span><span>            } </span><span style="color:#c678dd;">else </span><span>{
+</span><span>                </span><span style="color:#e06c75;">self</span><span>.</span><span style="color:#61afef;">requires_unsafe</span><span>(expr.span, AccessToUnionField);
+</span><span>            }
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p><code>UnsafeVisitor::visit_pat()</code>:</p>
+<pre data-lang="rust" style="background-color:#282c34;color:#dcdfe4;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#5c6370;">// https://github.com/rust-lang/rust/blob/master/compiler/rustc_mir_build/src/check_unsafety.rs#L341-L366
+</span><span style="color:#c678dd;">match &amp;</span><span>pat.kind {
+</span><span>    PatKind::Leaf { subpatterns, </span><span style="color:#c678dd;">.. </span><span>} </span><span style="color:#c678dd;">=&gt; </span><span>{
+</span><span>        </span><span style="color:#c678dd;">if let </span><span>ty::Adt(adt_def, </span><span style="color:#c678dd;">..</span><span>) </span><span style="color:#c678dd;">=</span><span> pat.ty.</span><span style="color:#61afef;">kind</span><span>() {
+</span><span>            </span><span style="color:#c678dd;">for</span><span> pat </span><span style="color:#c678dd;">in</span><span> subpatterns {
+</span><span>                </span><span style="color:#c678dd;">if</span><span> adt_def.</span><span style="color:#61afef;">non_enum_variant</span><span>().fields[pat.field].safety </span><span style="color:#c678dd;">== </span><span>Safety::Unsafe {
+</span><span>                    </span><span style="color:#e06c75;">self</span><span>.</span><span style="color:#61afef;">requires_unsafe</span><span>(pat.pattern.span, UseOfUnsafeField);
+</span><span>                }
+</span><span>            }
+</span><span>            </span><span style="color:#c678dd;">if</span><span> adt_def.</span><span style="color:#61afef;">is_union</span><span>() {
+</span><span>                </span><span style="color:#c678dd;">let</span><span> old_in_union_destructure </span><span style="color:#c678dd;">=
+</span><span>                    std::mem::replace(</span><span style="color:#c678dd;">&amp;mut </span><span style="color:#e06c75;">self</span><span>.in_union_destructure, </span><span style="color:#e5c07b;">true</span><span>);
+</span><span>                visit::walk_pat(</span><span style="color:#e06c75;">self</span><span>, pat);
+</span><span>                </span><span style="color:#e06c75;">self</span><span>.in_union_destructure </span><span style="color:#c678dd;">=</span><span> old_in_union_destructure;
+</span><span>            } </span><span style="color:#c678dd;">else if </span><span>(Bound::Unbounded, Bound::Unbounded)
+</span><span>                </span><span style="color:#c678dd;">!= </span><span style="color:#e06c75;">self</span><span>.tcx.</span><span style="color:#61afef;">layout_scalar_valid_range</span><span>(adt_def.</span><span style="color:#61afef;">did</span><span>())
+</span><span>            {
+</span><span>                </span><span style="color:#c678dd;">let</span><span> old_inside_adt </span><span style="color:#c678dd;">= </span><span>std::mem::replace(</span><span style="color:#c678dd;">&amp;mut </span><span style="color:#e06c75;">self</span><span>.inside_adt, </span><span style="color:#e5c07b;">true</span><span>);
+</span><span>                visit::walk_pat(</span><span style="color:#e06c75;">self</span><span>, pat);
+</span><span>                </span><span style="color:#e06c75;">self</span><span>.inside_adt </span><span style="color:#c678dd;">=</span><span> old_inside_adt;
+</span><span>            } </span><span style="color:#c678dd;">else </span><span>{
+</span><span>                visit::walk_pat(</span><span style="color:#e06c75;">self</span><span>, pat);
+</span><span>            }
+</span><span>        } </span><span style="color:#c678dd;">else </span><span>{
+</span><span>            visit::walk_pat(</span><span style="color:#e06c75;">self</span><span>, pat);
+</span><span>        }
+</span><span>    }
+</span><span>    </span><span style="color:#5c6370;">// ...
+</span><span>}
+</span></code></pre>
+<h3 id="anonymous-constant"><a class="zola-anchor" href="#anonymous-constant" aria-label="Anchor link for: anonymous-constant">Anonymous Constant</a></h3>
+<p>HIR用<code>AnonConst</code>表示 <em>anonymous constant（匿名常量）</em>。</p>
+<pre data-lang="rust" style="background-color:#282c34;color:#dcdfe4;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#5c6370;">// https://github.com/rust-lang/rust/blob/master/compiler/rustc_hir/src/hir.rs#L1682-L1696
+</span><span> </span><span style="color:#5c6370;">/// A constant (expression) that&#39;s not an item or associated item, 
+</span><span> </span><span style="color:#5c6370;">/// but needs its own `DefId` for type-checking, const-eval, etc. 
+</span><span> </span><span style="color:#5c6370;">/// These are usually found nested inside types (e.g., array lengths) 
+</span><span> </span><span style="color:#5c6370;">/// or expressions (e.g., repeat counts), and also used to define 
+</span><span> </span><span style="color:#5c6370;">/// explicit discriminant values for enum variants. 
+</span><span> </span><span style="color:#5c6370;">/// 
+</span><span> </span><span style="color:#5c6370;">/// You can check if this anon const is a default in a const param 
+</span><span> </span><span style="color:#5c6370;">/// `const N: usize = { ... }` with `tcx.hir().opt_const_param_default_param_def_id(..)` 
+</span><span> #[</span><span style="color:#e06c75;">derive</span><span>(Copy, Clone, Debug, HashStable_Generic)] 
+</span><span> </span><span style="color:#c678dd;">pub struct </span><span>AnonConst { 
+</span><span>     </span><span style="color:#c678dd;">pub </span><span style="color:#e06c75;">hir_id</span><span>: HirId, 
+</span><span>     </span><span style="color:#c678dd;">pub </span><span style="color:#e06c75;">def_id</span><span>: LocalDefId, 
+</span><span>     </span><span style="color:#c678dd;">pub </span><span style="color:#e06c75;">body</span><span>: BodyId, 
+</span><span>     </span><span style="color:#c678dd;">pub </span><span style="color:#e06c75;">span</span><span>: Span, 
+</span><span> } 
+</span></code></pre>
+<ul>
+<li>这里表明到，<em>anonymous constant</em> 并不是一个item。</li>
+</ul>
+<p>但实际上，<code>AnonConst</code>在许多地方会被当作成一个item来处理，比如本文讲到的Unsafety Checking。<em>anonymous constant</em>并不具备继承unsafety的能力，考虑以下代码：</p>
+<pre data-lang="rust" style="background-color:#282c34;color:#dcdfe4;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#c678dd;">const unsafe fn </span><span style="color:#61afef;">foo</span><span>() -&gt; </span><span style="color:#c678dd;">usize </span><span>{ </span><span style="color:#e5c07b;">1 </span><span>}
+</span><span>
+</span><span style="color:#c678dd;">fn </span><span style="color:#61afef;">main</span><span>() {
+</span><span>    </span><span style="color:#c678dd;">unsafe </span><span>{
+</span><span>        </span><span style="color:#c678dd;">let</span><span> _x </span><span style="color:#c678dd;">= </span><span>[</span><span style="color:#e5c07b;">0</span><span>; </span><span style="color:#61afef;">foo</span><span>()];
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>有如下报错信息：</p>
+<pre data-lang="shell" style="background-color:#282c34;color:#dcdfe4;" class="language-shell "><code class="language-shell" data-lang="shell"><span>Compiling playground v0.0.1 (/playground)
+</span><span>warning: unnecessary `unsafe` block
+</span><span> --&gt; src/main.rs:4:5
+</span><span>  |
+</span><span>4 |     unsafe {
+</span><span>  |     ^^^^^^ unnecessary `unsafe` block
+</span><span>  |
+</span><span>  = note: `#[warn(unused_unsafe)]` on by default
+</span><span>
+</span><span>error[E0133]: call to unsafe function `foo` is unsafe and requires unsafe function or block
+</span><span> --&gt; src/main.rs:5:22
+</span><span>  |
+</span><span>4 |     unsafe {
+</span><span>  |     ------ items do not inherit unsafety from separate enclosing items
+</span><span>5 |         let _x = [0; foo()];
+</span><span>  |                      ^^^^^ call to unsafe function
+</span><span>  |
+</span><span>  = note: consult the function&#39;s documentation for information on how to avoid undefined behavior
+</span><span>
+</span><span>For more information about this error, try `rustc --explain E0133`.
+</span><span>warning: `playground` (bin &quot;playground&quot;) generated 1 warning
+</span><span>error: could not compile `playground` (bin &quot;playground&quot;) due to 1 previous error; 1 warning emitted
+</span></code></pre>
+<p>因为这里<code>foo()</code>被表示为<em>anonymous constant</em>，而<em>anonymous constant</em>在Unsafety Checking中被当作成一个item来处理，因此其不具备继承unsafety的能力，因此报错。</p>
+<h2 id="can-kao"><a class="zola-anchor" href="#can-kao" aria-label="Anchor link for: can-kao">参考</a></h2>
+<ol>
+<li><a href="https://rustc-dev-guide.rust-lang.org/unsafety-checking.htm">Rustc Dev Guide: Unsafety Checking</a></li>
+<li><a href="https://github.com/rust-lang/rust/issues/133441#issuecomment-2532923245">Issue #133441: An unsafe const fn being used to compute an array length or const generic is incorrectly described as being an "item".</a></li>
+</ol>
+
+            </section>
+        </article>
+    </main>
+
+
+
+            
+                
+            
+
+            
+        </div>
+    </body>
+
+</html>
