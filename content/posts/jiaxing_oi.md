@@ -1,9 +1,11 @@
 +++
 title = "2023嘉兴高三基础检测卷信息技术压轴题剖析"
 date = "2023-10-03"
-taxonomies.tags = [
+
+[taxonomies]
+categories = ["zh-cn"]
+tags = [
     "Algorithm",
-    "Chinese",
 ]
 +++
 

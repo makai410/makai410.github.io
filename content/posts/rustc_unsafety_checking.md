@@ -1,10 +1,12 @@
 +++
 title = "rustc浅析: Unsafety Checking"
 date = "2024-12-15"
-taxonomies.tags = [
+
+[taxonomies]
+categories = ["zh-cn"]
+tags = [
     "Rust",
     "Compiler",
-    "Chinese",
 ]
 +++
 

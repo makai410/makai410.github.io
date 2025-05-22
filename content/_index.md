@@ -1,10 +1,25 @@
 +++
-title= "Makai's Blog"
-template = "homepage.html"
+template = 'home.html'
 
 [extra]
-local_image = "/avatar.png"
-+++
+lang = 'en'
 
-# Hi👋 Ciao👋 Hola👋 你好👋
-<div align="left"><img src="/avatar.png" width="20%"></div>
+# Show footer in home page
+footer = false
+
+# If you don't want to display id/bio/avatar, simply comment out that line
+name = "Makai"
+id = "makai410"
+bio = "\"who cares about 潮流人士, they don't know that i write code for the Rust compiler.\""
+avatar = "/avatar.png"
+links = [
+    { name = "GitHub", icon = "github", url = "https://github.com/makai410" },
+    { name = "Email", icon = "email", url = "mailto:m4kai410@gmail.com" },
+]
+
+# Show a few recent posts in home page
+recent = true
+recent_max = 15
+recent_more_text = "more »"
+date_format = "%b %-d, %Y"
++++
