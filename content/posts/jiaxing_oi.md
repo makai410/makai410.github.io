@@ -61,7 +61,7 @@ def init(m, n):
 
 题目很心机地没有给全顶点`7`所有的相邻顶点，细心的你如果仔细观察，会发现顶点`7`还有一个相邻顶点：`6`。
 
-<div align="left"><img src="https://github.com/makai410/makai.blog/assets/46321515/2cbe2602-821d-477f-b73e-5e3bede2a03f" width="40%" alt="第15题图a" title="第15题图a"></div>
+<div align="left"><img src="/jiaxing-oi/track.png" width="40%" alt="第15题图a" title="第15题图a"></div>
 
 因此到达顶点`11`的路径还有一条：4-5-6-7-11。
 
@@ -191,7 +191,7 @@ print_path(x, path, tail)
 
 不要急，我们再看一下(2)题给的图。（这里图画错了，`10`的子结点`8`应为`6`）
 
-<div align="left"><img src="https://github.com/makai410/makai.blog/assets/46321515/6ca0e6d4-705f-42e6-835b-3179689ab761" width="100%" alt="第15题图c" title="第15题图c"></div>
+<div align="left"><img src="/jiaxing-oi/tree.png" width="100%" alt="第15题图c" title="第15题图c"></div>
 
 我超！树！
 
@@ -203,7 +203,7 @@ print_path(x, path, tail)
 
 实际上，我们的`path`链表应该长这样：
 
-<div align="left"><img src="https://github.com/makai410/makai.blog/assets/46321515/33cd700e-3061-452c-a1b9-8181daaf13be" width="100%" alt="第15题图c-reversed" title="第15题图c-reversed"></div>
+<div align="left"><img src="/jiaxing-oi/reversed-tree.png" width="100%" alt="第15题图c-reversed" title="第15题图c-reversed"></div>
 
 因此，用到的数据结构和算法为：
 
@@ -264,7 +264,7 @@ print_path(x, path, tail)
 
 我们结合一下方才推断出的算法，可以得到下图：
 
-<div align="left"><img src="https://github.com/makai410/makai.blog/assets/46321515/28a43224-c50d-4713-b3fe-2d774ffc9e5a" width="40%" alt="flow-one" title="flow-one"></div>
+<div align="left"><img src="/jiaxing-oi/flow-one.png" width="40%" alt="flow-one" title="flow-one"></div>
 
 每个新增的子结点统统指向父结点。
 
@@ -298,7 +298,7 @@ print_path(x, path, tail)
 
 我们顺着树走一遍看看。
 
-<div align="left"><img src="https://github.com/makai410/makai.blog/assets/46321515/5ba999e8-30f5-4ccb-afa8-b459ccbf3879" width="100%" alt="banned-tree" title="banned-tree"></div>
+<div align="left"><img src="/jiaxing-oi/banned-tree.png" width="100%" alt="banned-tree" title="banned-tree"></div>
 
 可以看到，很多原本应该要走到的顶点，因为已途经而不再走了。
 
@@ -328,7 +328,7 @@ print_path(x, path, tail)
 
 通常，我们会采用**队列**来实现BFS。这道题就是一个很典型的BFS实现。并且这里表面上是**树**，实际上是一个**图**。而且是一个**无向图**。
 
-<div align="left"><img src="https://github.com/makai410/makai.blog/assets/46321515/d71d30db-8403-43f2-85a0-d7598512bad5" width="80%" alt="graph" title="graph"></div>
+<div align="left"><img src="/jiaxing-oi/graph.png" width="80%" alt="graph" title="graph"></div>
 
 之后对该图进行广搜，找到所有最短路径。
 
