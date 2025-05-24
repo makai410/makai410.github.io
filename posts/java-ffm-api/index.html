@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  
+  
+    
+  
+  <meta name="description" content="">
+
+  <title>浅析一下Java FFM API(Project Panama)</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="https://makai410.dev/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://makai410.dev/img/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://makai410.dev/img/apple-touch-icon.png">
+  
+  <style>
+
+  /* light mode colors */
+  body {
+    --primary-color: #5871a2;
+    --primary-pale-color: #5871a233;
+    --primary-decoration-color: #5871a210;
+    --bg-color: #ffffff;
+    --text-color: #2f3030;
+    --text-pale-color: #767676;
+    --text-decoration-color: #a9a9a9;
+    --highlight-mark-color: #5f75b020;
+
+    --callout-note-color: #5871a2;
+    --callout-tip-color: #268556;
+    --callout-important-color: #885fc9;
+    --callout-warning-color: #ab6632;
+    --callout-caution-color: #c64e4e;
+  }
+
+  /* dark mode colors */
+  body.dark {
+    --primary-color: #6f8fd1;
+    --primary-pale-color: #6f8fd166;
+    --primary-decoration-color: #6f8fd112;
+    --bg-color: #1c1c1c;
+    --text-color: #c1c1c1;
+    --text-pale-color: #848484;
+    --text-decoration-color: #5f5f5f;
+    --highlight-mark-color: #8296cb3b;
+
+    --callout-note-color: #6f8fd1;
+    --callout-tip-color: #47976f;
+    --callout-important-color: #9776cd;
+    --callout-warning-color: #ad7a52;
+    --callout-caution-color: #d06161;
+  }
+
+  /* typography */
+  body {
+    --main-font: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --code-font: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --homepage-max-width: 768px;
+    --main-max-width: 768px;
+    --avatar-size: 60px;
+    --font-size: 16px;
+    --line-height: 1.75;
+    --img-border-radius: 0px;
+    --detail-border-radius: 0px;
+    --dark-mode-img-brightness: 0.75;
+    --dark-mode-chart-brightness: 0.75;
+    --inline-code-border-radius: 2px;
+    --inline-code-bg-color: var(--primary-decoration-color);
+    --block-code-border-radius: 0px;
+    --block-code-border-color: var(--primary-color);
+    --detail-border-color: var(--primary-color);
+  }
+
+</style>
+
+  <link rel="stylesheet" href="https://makai410.dev/main.css">
+  
+
+<link id="hl" rel="stylesheet" type="text/css" href="/hl-light.css" />
+
+
+
+  
+</head>
+
+<body class="post">
+  
+  <script>
+    const theme = sessionStorage.getItem('theme');
+    const match = window.matchMedia("(prefers-color-scheme: dark)").matches
+    if ((theme && theme == 'dark') || (!theme && match)) {
+      document.body.classList.add('dark');
+      const hl = document.querySelector('link#hl');
+      if (hl) hl.href = 'https://makai410.dev/hl-dark.css';
+    }
+  </script>
+  
+  
+<div id="wrapper">
+  <div id="blank"></div>
+  <aside>
+    
+    
+    <nav>
+      <ul>
+        
+        <li>
+          <a class="h2" href="#qian-yan">前言</a>
+          
+        </li>
+        
+        <li>
+          <a class="h2" href="#ffm-apijie-shao">FFM API介绍</a>
+          
+        </li>
+        
+        <li>
+          <a class="h2" href="#memory-api">Memory API</a>
+          
+          <ul>
+            
+            <li>
+              <a class="h3" href="#memory-apishi-dui-jdk-internal-misc-unsafede-an-quan-feng-zhuang">Memory API是对jdk.internal.misc.Unsafe的安全封装</a>
+            </li>
+            
+          </ul>
+          
+        </li>
+        
+        <li>
+          <a class="h2" href="#non-goals">Non-goals</a>
+          
+        </li>
+        
+        <li>
+          <a class="h2" href="#foreign-function-interface">Foreign Function Interface</a>
+          
+          <ul>
+            
+            <li>
+              <a class="h3" href="#linker-yu-symbollookup">Linker 与 SymbolLookup</a>
+            </li>
+            
+            <li>
+              <a class="h3" href="#jdk-internal-loaderxia-de-ben-di-ku-xiang-guan-shi-li">jdk.internal.loader下的本地库相关实例</a>
+            </li>
+            
+          </ul>
+          
+        </li>
+        
+        <li>
+          <a class="h2" href="#zong-jie">总结</a>
+          
+        </li>
+        
+      </ul>
+    </nav>
+    
+    
+    <button id="back-to-top" aria-label="back to top">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-up"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+
+    </button>
+    
+  </aside>
+  <main>
+    
+<header>
+  <nav>
+    <a href="https:&#x2F;&#x2F;makai410.dev&#x2F;posts">← Back</a>
+  </nav>
+</header>
+
+
+    <div>
+      
+      
+      
+      
+      <div id="copy-cfg" style="display: none;" data-copy-icon="&lt;svg xmlns=&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2000&#x2F;svg&quot; viewBox=&quot;0 0 24 24&quot; width=&quot;18&quot; height=&quot;18&quot;&gt;&lt;path d=&quot;M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z&quot; fill=&quot;currentColor&quot;&gt;&lt;&#x2F;path&gt;&lt;&#x2F;svg&gt;
+" data-check-icon="&lt;svg xmlns=&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2000&#x2F;svg&quot; viewBox=&quot;0 0 24 24&quot; width=&quot;18&quot; height=&quot;18&quot;&gt;&lt;path d=&quot;M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z&quot; fill=&quot;currentColor&quot;&gt;&lt;&#x2F;path&gt;&lt;&#x2F;svg&gt;
+"></div>
+      
+      <article class="prose">
+        <h1>浅析一下Java FFM API(Project Panama)</h1>
+        <div id="post-info">
+          <div id="date">
+            <span id="publish">Aug 5, 2023</span>
+            </div>
+
+          
+          <div id="tags">
+            <a class="instant" href="https://makai410.dev/tags/jvm"><span>#</span>JVM</a>
+          </div>
+          
+        </div>
+
+        
+        
+
+        
+
+        <p><strong>这篇文章并不是讲如何使用Java FFM API，而是浅谈其背后的实现原理。</strong></p>
+<h2 id="qian-yan">前言<a class="zola-anchor" href="#qian-yan" aria-label="Anchor link for: qian-yan" style="visibility: hidden;"></a>
+</h2>
+<p>前不久，OpenJDK宣布了<code>Java Foreign Function &amp; Memory API</code>将在JDK 22退出预览，这意味着在JDK 22后，FFM API不会有重大改动。借此机会，我想可以好好聊聊FFM API是怎么实现的。</p>
+<h2 id="ffm-apijie-shao">FFM API介绍<a class="zola-anchor" href="#ffm-apijie-shao" aria-label="Anchor link for: ffm-apijie-shao" style="visibility: hidden;"></a>
+</h2>
+<p>FFM API由两大部分组成，一个是<code>Foreign Function Interface</code>，另一个是<code>Memory API</code>。前者是外部函数接口，简称FFI，用它来实现Java代码和外部代码之间相互操作；后者是内存接口，用于<strong>安全地</strong>管理堆外内存。</p>
+<h2 id="memory-api">Memory API<a class="zola-anchor" href="#memory-api" aria-label="Anchor link for: memory-api" style="visibility: hidden;"></a>
+</h2>
+<p>为了方便切入，我这里写了一个很简单的Demo：</p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">static</span> void <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">allocDemo</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> throws <span class="z-support z-class z-java">Throwable</span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-exception z-try z-java">try</span> <span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">Arena</span> arena <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> <span class="z-support z-class z-java">Arena</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">ofConfined</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-support z-class z-java">MemorySegment</span> cString <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> arena<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">allocateUtf8String</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-string z-quoted z-double z-java"><span class="z-punctuation z-definition z-string z-begin z-java">&quot;</span>Panama<span class="z-punctuation z-definition z-string z-end z-java">&quot;</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-support z-class z-java">String</span> jString <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> cString<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">getUtf8String</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-constant z-numeric z-integer z-decimal z-java">0<span class="z-storage z-type z-numeric z-java">l</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-support z-class z-java">System</span><span class="z-punctuation z-accessor z-dot z-java">.</span>out<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">println</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>jString<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">    <span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<ul>
+<li>这里在堆外开辟了一段内存来存放字符串<code>Panama</code>，接下来copy到JVM栈上，最后输出。</li>
+<li>简单介绍下，<code>MemorySegment</code>用于表示一段内存片段（既可以是堆内也可以是堆外），<code>Arena</code>划定了一个作用域，便于进行内存回收。</li>
+</ul>
+<p>这背后做了些什么工作呢？我们跳过去看看。</p>
+<h3 id="memory-apishi-dui-jdk-internal-misc-unsafede-an-quan-feng-zhuang">Memory API是对jdk.internal.misc.Unsafe的安全封装<a class="zola-anchor" href="#memory-apishi-dui-jdk-internal-misc-unsafede-an-quan-feng-zhuang" aria-label="Anchor link for: memory-apishi-dui-jdk-internal-misc-unsafede-an-quan-feng-zhuang" style="visibility: hidden;"></a>
+</h3>
+<p>我们首先跳到<code>cString.getUtfString</code>，因为很明显该部分涉及到访问堆外内存的操作。局部代码如下：</p>
+<p><code>MemorySegment.java line:1089</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-storage z-modifier z-java">default</span> <span class="z-support z-class z-java">String</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">getUtf8String</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-storage z-type z-primitive z-java">long</span> offset<span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-support z-class z-java">SharedUtils</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">toJavaStringInternal</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-variable z-language z-java">this</span><span class="z-punctuation z-separator z-comma z-java">,</span> offset<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<ul>
+<li>这里写把操作写到了一个Util里面。</li>
+</ul>
+<p>我们跳过去看看。</p>
+<hr />
+<p><code>ShareUtils.java line:250</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-storage z-modifier z-java">public</span> <span class="z-storage z-modifier z-java">static</span> <span class="z-support z-class z-java">String</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">toJavaStringInternal</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">MemorySegment</span> segment<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> start<span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-storage z-type z-primitive z-java">int</span> len <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">strlen</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>segment<span class="z-punctuation z-separator z-comma z-java">,</span> start<span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-storage z-type z-primitive z-java">byte</span><span class="z-storage z-modifier z-array z-java">[]</span> bytes <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> <span class="z-meta z-instantiation z-java"><span class="z-keyword z-other z-storage z-new z-java">new</span> <span class="z-storage z-type z-primitive z-java">byte</span><span class="z-meta z-brackets z-array-initialization z-java"><span class="z-punctuation z-section z-brackets z-begin z-java">[</span>len<span class="z-punctuation z-section z-brackets z-end z-java">]</span></span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-support z-class z-java">MemorySegment</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">copy</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>segment<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-constant z-other z-java">JAVA_BYTE</span><span class="z-punctuation z-separator z-comma z-java">,</span> start<span class="z-punctuation z-separator z-comma z-java">,</span> bytes<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-constant z-numeric z-integer z-decimal z-java">0</span><span class="z-punctuation z-separator z-comma z-java">,</span> len<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-meta z-instantiation z-java"><span class="z-keyword z-other z-storage z-new z-java">new</span> <span class="z-support z-class z-java">String</span><span class="z-meta z-parens z-constructor-arguments z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span>bytes<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">StandardCharsets</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-constant z-other z-java">UTF_8</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<ul>
+<li>这里设置了一个<code>byte</code>数组，这是在JVM栈上的，之后访问堆外内存，进行copy操作。</li>
+</ul>
+<p>很明显<code>MemorySegment.copy</code>才是我们关心的，再跳过去看看。</p>
+<hr />
+<p><code>MemorySegment.java line:2209</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-punctuation z-definition z-annotation z-java">@</span></span><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"><span class="z-variable z-annotation z-java">ForceInline</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"></span></span><span class="z-storage z-modifier z-java">static</span> void <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">copy</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-function-call z-java">        <span class="z-support z-class z-java">MemorySegment</span> srcSegment<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">ValueLayout</span> srcLayout<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> srcOffset<span class="z-punctuation z-separator z-comma z-java">,</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-function-call z-java">        <span class="z-support z-class z-java">Object</span> dstArray<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">int</span> dstIndex<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">int</span> elementCount<span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-support z-class z-java">Objects</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">requireNonNull</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>srcSegment<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-support z-class z-java">Objects</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">requireNonNull</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>dstArray<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-support z-class z-java">Objects</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">requireNonNull</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>srcLayout<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-support z-class z-java">AbstractMemorySegmentImpl</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">copy</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>srcSegment<span class="z-punctuation z-separator z-comma z-java">,</span> srcLayout<span class="z-punctuation z-separator z-comma z-java">,</span> srcOffset<span class="z-punctuation z-separator z-comma z-java">,</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function-call z-java">            dstArray<span class="z-punctuation z-separator z-comma z-java">,</span> dstIndex<span class="z-punctuation z-separator z-comma z-java">,</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function-call z-java">            elementCount<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<ul>
+<li>这里先是一顿判空，之后再调用了<code>AbstractMemorySegmentImpl.copy</code>方法，这里<code>AbstractMemorySegmentImpl</code>是<code>MemorySegment</code>的实现，<code>MemorySegment</code>是一个密封接口，只允许了<code>AbstractMemorySegmentImpl</code>实现。</li>
+</ul>
+<p>OK，继续跳转。</p>
+<hr />
+<p><code>AbstractMemorySegmentImpl.java line:625</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-punctuation z-definition z-annotation z-java">@</span></span><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"><span class="z-variable z-annotation z-java">ForceInline</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"></span></span><span class="z-storage z-modifier z-java">public</span> <span class="z-storage z-modifier z-java">static</span> void <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">copy</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">MemorySegment</span> srcSegment<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">ValueLayout</span> srcLayout<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> srcOffset<span class="z-punctuation z-separator z-comma z-java">,</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-function-call z-java">                        <span class="z-support z-class z-java">Object</span> dstArray<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">int</span> dstIndex<span class="z-punctuation z-separator z-comma z-java">,</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-function-call z-java">                        <span class="z-storage z-type z-primitive z-java">int</span> elementCount<span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-comment z-line z-double-slash z-java"><span class="z-punctuation z-definition z-comment z-java">//</span> 此处省略了原本一系列判空、校验等操作。
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-conditional z-if z-java">if</span> <span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span>dstWidth <span class="z-keyword z-operator z-comparison z-java">==</span> <span class="z-constant z-numeric z-integer z-decimal z-java">1</span> <span class="z-keyword z-operator z-logical z-java">||</span> srcLayout<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">order</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-keyword z-operator z-comparison z-java">==</span> <span class="z-support z-class z-java">ByteOrder</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">nativeOrder</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-support z-class z-java">ScopedMemoryAccess</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">getScopedMemoryAccess</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">copyMemory</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>srcImpl<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">sessionImpl</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-constant z-language z-java">null</span><span class="z-punctuation z-separator z-comma z-java">,</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function-call z-java">                srcImpl<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">unsafeGetBase</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-separator z-comma z-java">,</span> srcImpl<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">unsafeGetOffset</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-keyword z-operator z-arithmetic z-java">+</span> srcOffset<span class="z-punctuation z-separator z-comma z-java">,</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function-call z-java">                dstArray<span class="z-punctuation z-separator z-comma z-java">,</span> dstBase <span class="z-keyword z-operator z-arithmetic z-java">+</span> <span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span>dstIndex <span class="z-keyword z-operator z-arithmetic z-java">*</span> dstWidth<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-separator z-comma z-java">,</span> elementCount <span class="z-keyword z-operator z-arithmetic z-java">*</span> dstWidth<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">    <span class="z-punctuation z-section z-block z-end z-java">}</span></span> <span class="z-keyword z-control z-conditional z-else z-java">else</span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-support z-class z-java">ScopedMemoryAccess</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">getScopedMemoryAccess</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">copySwapMemory</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>srcImpl<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">sessionImpl</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-constant z-language z-java">null</span><span class="z-punctuation z-separator z-comma z-java">,</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function-call z-java">                srcImpl<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">unsafeGetBase</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-separator z-comma z-java">,</span> srcImpl<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">unsafeGetOffset</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-keyword z-operator z-arithmetic z-java">+</span> srcOffset<span class="z-punctuation z-separator z-comma z-java">,</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function-call z-java">                dstArray<span class="z-punctuation z-separator z-comma z-java">,</span> dstBase <span class="z-keyword z-operator z-arithmetic z-java">+</span> <span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span>dstIndex <span class="z-keyword z-operator z-arithmetic z-java">*</span> dstWidth<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-separator z-comma z-java">,</span> elementCount <span class="z-keyword z-operator z-arithmetic z-java">*</span> dstWidth<span class="z-punctuation z-separator z-comma z-java">,</span> dstWidth<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">    <span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<ul>
+<li>这里可以看到一个<code>ScopedMemoryAccess</code>，熟悉jdk.internal.misc.Unsafe的大佬估计到这就懂了，<code>ScopedMemoryAccess</code>也是在jdk.internal.misc下的，并且其中有一个<code>UNSAFE</code>字段。</li>
+</ul>
+<p>最终，我们顺着<code>ScopedMemoryAccess.getScopedMemoryAccess().copyMemory</code>最终会跳转到哪里呢？答案是<code>Unsafe</code>中的一个native方法：<code>copyMemory0</code>，<del>而该native方法是通过JNI实现的</del>虽然它是一个native方法，但是它被<code>@IntrinsicCandidate</code>注解修饰。</p>
+<h4 id="intrinsiccandidate">@IntrinsicCandidate<a class="zola-anchor" href="#intrinsiccandidate" aria-label="Anchor link for: intrinsiccandidate" style="visibility: hidden;"></a>
+</h4>
+<p>这个注解表明被修饰的方法<strong>可能</strong>会被HotSpot内联，这取决于是否为当前平台的虚拟机手写了汇编/编译器IR，以降低开销。</p>
+<p>部分jdk.internal.misc.Unsafe的native方法如下：</p>
+<p><code>Unsafe.java line:3823</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">native</span> <span class="z-storage z-type z-primitive z-java">long</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">allocateMemory0</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-storage z-type z-primitive z-java">long</span> bytes<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">native</span> <span class="z-storage z-type z-primitive z-java">long</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">reallocateMemory0</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-storage z-type z-primitive z-java">long</span> address<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> bytes<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">native</span> void <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">freeMemory0</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-storage z-type z-primitive z-java">long</span> address<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">native</span> void <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">setMemory0</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">Object</span> o<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> offset<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> bytes<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">byte</span> value<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-punctuation z-definition z-annotation z-java">@</span></span><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"><span class="z-variable z-annotation z-java">IntrinsicCandidate</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"></span></span><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">native</span> void <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">copyMemory0</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">Object</span> srcBase<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> srcOffset<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">Object</span> destBase<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> destOffset<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> bytes<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">native</span> void <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">copySwapMemory0</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">Object</span> srcBase<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> srcOffset<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">Object</span> destBase<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> destOffset<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> bytes<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-storage z-type z-primitive z-java">long</span> elemSize<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">native</span> <span class="z-storage z-type z-primitive z-java">long</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">objectFieldOffset0</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">Field</span> f<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></code></pre>
+<ul>
+<li>可以看到像<code>Unsafe::allocateMemory0</code>, <code>Unsafe::freeMemory0</code>等关键的native方法未被<code>@IntrinsicCandidate</code>注解修饰，这也意味着这些方法是使用JNI实现的。</li>
+</ul>
+<p>那么Memory API是否使用了这些native方法呢？</p>
+<p>经过分析，Memory API开辟堆外内存的操作确实使用了<code>Unsafe::allocateMemory0</code>方法。</p>
+<p>OK，可以下结论了：Memory API是对<code>jdk.internal.misc.Unsafe</code>的封装，使得Java程序员操纵堆外内存更加得心应手，让Unsafe变得Safe。这一点其实已在相关的JEP里表明了：</p>
+<blockquote>
+<h2 id="non-goals">Non-goals<a class="zola-anchor" href="#non-goals" aria-label="Anchor link for: non-goals" style="visibility: hidden;"></a>
+</h2>
+<p>It is not a goal to</p>
+<p>· Re-implement JNI on top of this API, or otherwise change JNI in any way;</p>
+<p>· Re-implement legacy Java APIs, such as <code>sun.misc.Unsafe</code>, on top of this API;</p>
+<p>· Provide tooling that mechanically generates Java code from native-code header files; or</p>
+<p>· Change how Java applications that interact with native libraries are packaged and deployed (e.g., via multi-platform JAR files).</p>
+</blockquote>
+<p><em>来源：<a rel="nofollow noreferrer" href="https://openjdk.org/jeps/442">JEP 442: Foreign Function &amp; Memory API (Third Preview)</a></em></p>
+<p>我在阅读该段落时陷入过一个逻辑错误，为避免大家同样陷入该逻辑错误，我在这解释一下。</p>
+<p>该段第二条讲的是：在该API上，重新实现像<code>sun.misc.Unsafe</code>之类的遗留API。而这里是Non-goals，也就是说，该API不会重新实现像<code>sun.misc.Unsafe</code>之类的遗留API，意味着该API会做一些像完善<code>sun.misc.Unsafe</code>之类的工作。</p>
+<p>可以看到，Java FFM API并没有完全脱离JNI。那FFI部分呢？该不会也是封装JNI吧？我们一探究竟。</p>
+<h2 id="foreign-function-interface">Foreign Function Interface<a class="zola-anchor" href="#foreign-function-interface" aria-label="Anchor link for: foreign-function-interface" style="visibility: hidden;"></a>
+</h2>
+<p>我同样写了一个Demo：</p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">static</span> void <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">downCallDemo</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> throws <span class="z-support z-class z-java">Throwable</span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-support z-class z-java">Linker</span> linker <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> <span class="z-support z-class z-java">Linker</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">nativeLinker</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-support z-class z-java">MemorySegment</span> strlen_address <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> linker<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">defaultLookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">find</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-string z-quoted z-double z-java"><span class="z-punctuation z-definition z-string z-begin z-java">&quot;</span>strlen<span class="z-punctuation z-definition z-string z-end z-java">&quot;</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">get</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-support z-class z-java">MethodHandle</span> strlen <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> linker<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">downcallHandle</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-assignment z-rhs z-java"><span class="z-meta z-function-call z-java">            strlen_address<span class="z-punctuation z-separator z-comma z-java">,</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-assignment z-rhs z-java"><span class="z-meta z-function-call z-java">            <span class="z-support z-class z-java">FunctionDescriptor</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">of</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-constant z-other z-java">JAVA_LONG</span><span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-constant z-other z-java">ADDRESS</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-assignment z-rhs z-java"><span class="z-meta z-function-call z-java">    <span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-exception z-try z-java">try</span> <span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">Arena</span> arena <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> <span class="z-support z-class z-java">Arena</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">ofConfined</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-support z-class z-java">MemorySegment</span> cString <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> arena<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">allocateUtf8String</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-string z-quoted z-double z-java"><span class="z-punctuation z-definition z-string z-begin z-java">&quot;</span>Hello<span class="z-punctuation z-definition z-string z-end z-java">&quot;</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-storage z-type z-primitive z-java">long</span> len <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> <span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-storage z-type z-primitive z-java">long</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> strlen<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">invokeExact</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>cString<span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span> <span class="z-comment z-line z-double-slash z-java"><span class="z-punctuation z-definition z-comment z-java">//</span> 5
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-support z-class z-java">System</span><span class="z-punctuation z-accessor z-dot z-java">.</span>out<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">println</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>len<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">    <span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<ul>
+<li>这里先是整一个Linker，之后获取本地既有函数<code>strlen</code>的地址，接着调用它并传入一个字符串，最后获取它的返回值，输出。</li>
+</ul>
+<p>我比较好奇的是，它是如何直接通过一个字符串查找到一个函数的？</p>
+<h3 id="linker-yu-symbollookup">Linker 与 SymbolLookup<a class="zola-anchor" href="#linker-yu-symbollookup" aria-label="Anchor link for: linker-yu-symbollookup" style="visibility: hidden;"></a>
+</h3>
+<p>为弄清以上问题，我们先看看<code>linker.defaultLookup()</code>是怎么实现的，因为很明显这里涉及到查找等操作。</p>
+<p><code>Linker.java line:636</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-support z-class z-java">SymbolLookup</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">defaultLookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></code></pre>
+<ul>
+<li>遗憾的是，<code>Linker</code>是一个接口，里面并没有实现<code>defaultLookup()</code>，因此我们需要找到它的实现类。</li>
+</ul>
+<p>在<code>Linker.java</code>中可以发现，<code>Linker</code>是一个密封接口，仅允许<code>AbstractLinker</code>实现。</p>
+<hr />
+<p><code>AbstractLinker.java line:60</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-storage z-modifier z-java">public</span> <span class="z-storage z-modifier z-java">abstract</span> sealed <span class="z-meta z-class z-java"><span class="z-meta z-class z-identifier z-java"><span class="z-storage z-type z-java">class</span> <span class="z-entity z-name z-class z-java">AbstractLinker</span></span> <span class="z-meta z-class z-implements z-java"><span class="z-keyword z-declaration z-implements z-java">implements</span> <span class="z-entity z-other z-inherited-class z-java">Linker</span> </span></span>permits <span class="z-support z-class z-java">LinuxAArch64Linker</span><span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">MacOsAArch64Linker</span><span class="z-punctuation z-separator z-comma z-java">,</span>
+</span><span class="z-source z-java">                                                                      <span class="z-support z-class z-java">SysVx64Linker</span><span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">WindowsAArch64Linker</span><span class="z-punctuation z-separator z-comma z-java">,</span>
+</span><span class="z-source z-java">                                                                      <span class="z-support z-class z-java">Windowsx64Linker</span><span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">LinuxPPC64leLinker</span><span class="z-punctuation z-separator z-comma z-java">,</span>
+</span><span class="z-source z-java">                                                                      <span class="z-support z-class z-java">LinuxRISCV64Linker</span><span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">FallbackLinker</span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-comment z-line z-double-slash z-java"><span class="z-punctuation z-definition z-comment z-java">//</span> ......
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<ul>
+<li>可以看到，<code>AbstractLinker</code>是个密封类，并提供了多个平台的实现。这里便可以推断出，在某个地方存在根据平台返回不同<code>Linker</code>的操作。实际上，这个操作就在<code>Linker.nativeLinker()</code> :(</li>
+</ul>
+<hr />
+<p><code>AbstractLinker</code>实现了<code>defaultLookup()</code>方法：</p>
+<p><code>AbstractLinker.java line:133</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-punctuation z-definition z-annotation z-java">@</span></span><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"><span class="z-variable z-annotation z-java">Override</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"></span></span><span class="z-storage z-modifier z-java">public</span> <span class="z-support z-class z-java">SystemLookup</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">defaultLookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-support z-class z-java">SystemLookup</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">getInstance</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<ul>
+<li>这里是的返回类型是<code>SystemLookup</code>，而在<code>Linker</code>内，<code>defaultLookup</code>的返回类型为<code>SymbolLookup</code>。实际上，<code>SystemLookup</code>是<code>SymbolLookup</code>的实现。</li>
+</ul>
+<p>至此，我们可以判断，在我们的Demo中，<code>linker</code>为对应平台的<code>Linker</code>实现；<code>linker.defaultLookup()</code>实际返回一个SystemLookup对象。</p>
+<p>那么，在<code>linker.defaultLookup().find("strlen")</code>中又发生了什么？</p>
+<hr />
+<p><code>SystemLookup.java line:137</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-punctuation z-definition z-annotation z-java">@</span></span><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"><span class="z-variable z-annotation z-java">Override</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"></span></span><span class="z-storage z-modifier z-java">public</span> <span class="z-support z-class z-java">Optional</span><span class="z-meta z-generic z-java"><span class="z-punctuation z-definition z-generic z-begin z-java">&lt;</span><span class="z-support z-class z-java">MemorySegment</span><span class="z-punctuation z-definition z-generic z-end z-java">&gt;</span></span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">find</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">String</span> name<span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-constant z-other z-java">SYSTEM_LOOKUP</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">find</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>name<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<p><code>SystemLookup.java line:57</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">static</span> <span class="z-storage z-modifier z-java">final</span> <span class="z-support z-class z-java">SymbolLookup</span> <span class="z-constant z-other z-java">SYSTEM_LOOKUP</span> <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">makeSystemLookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span><span class="z-source z-java">
+</span><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">static</span> <span class="z-support z-class z-java">SymbolLookup</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">makeSystemLookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-exception z-try z-java">try</span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-keyword z-control z-conditional z-if z-java">if</span> <span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">Utils</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-constant z-other z-java">IS_WINDOWS</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">            <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">makeWindowsLookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-punctuation z-section z-block z-end z-java">}</span></span> <span class="z-keyword z-control z-conditional z-else z-java">else</span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">            <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">libLookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-meta z-function z-anonymous z-parameters z-java"><span class="z-variable z-parameter z-java">libs</span></span> <span class="z-meta z-function z-anonymous z-body z-java"><span class="z-storage z-type z-function z-anonymous z-java">-&gt;</span> libs<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">load</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">jdkLibraryPath</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-string z-quoted z-double z-java"><span class="z-punctuation z-definition z-string z-begin z-java">&quot;</span>syslookup<span class="z-punctuation z-definition z-string z-end z-java">&quot;</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">    <span class="z-punctuation z-section z-block z-end z-java">}</span></span> <span class="z-meta z-catch z-java"><span class="z-keyword z-control z-exception z-catch z-java">catch</span> </span><span class="z-meta z-catch z-parameters z-java"><span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">Throwable</span> <span class="z-variable z-parameter z-java">ex</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-comment z-line z-double-slash z-java"><span class="z-punctuation z-definition z-comment z-java">//</span> This can happen in the event of a library loading failure - e.g. if one of the libraries the
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-comment z-line z-double-slash z-java"><span class="z-punctuation z-definition z-comment z-java">//</span> system lookup depends on cannot be loaded for some reason. In such extreme cases, rather than
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-comment z-line z-double-slash z-java"><span class="z-punctuation z-definition z-comment z-java">//</span> fail, return a dummy lookup.
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-constant z-other z-java">FALLBACK_LOOKUP</span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">    <span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<p><code>SystemLookup.java line:106</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-storage z-modifier z-java">private</span> <span class="z-storage z-modifier z-java">static</span> <span class="z-support z-class z-java">SymbolLookup</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">libLookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">Function</span><span class="z-meta z-generic z-java"><span class="z-punctuation z-definition z-generic z-begin z-java">&lt;</span><span class="z-support z-class z-java">RawNativeLibraries</span><span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">NativeLibrary</span><span class="z-punctuation z-definition z-generic z-end z-java">&gt;</span></span> loader<span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-support z-class z-java">NativeLibrary</span> lib <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> loader<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">apply</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">RawNativeLibraries</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">newInstance</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">MethodHandles</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">lookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-meta z-function z-anonymous z-parameters z-java"><span class="z-variable z-parameter z-java">name</span></span> <span class="z-meta z-function z-anonymous z-body z-java"><span class="z-storage z-type z-function z-anonymous z-java">-&gt;</span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java">        <span class="z-support z-class z-java">Objects</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">requireNonNull</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>name<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java">        <span class="z-keyword z-control z-conditional z-if z-java">if</span> <span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">Utils</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">containsNullChars</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>name<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-support z-class z-java">Optional</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">empty</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java">        <span class="z-keyword z-control z-exception z-try z-java">try</span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">            <span class="z-storage z-type z-primitive z-java">long</span> addr <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> lib<span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">lookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>name<span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">            <span class="z-keyword z-control z-flow z-return z-java">return</span> addr <span class="z-keyword z-operator z-comparison z-java">==</span> <span class="z-constant z-numeric z-integer z-decimal z-java">0</span> <span class="z-keyword z-operator z-ternary z-java">?</span>
+</span></span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">                    <span class="z-support z-class z-java">Optional</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">empty</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-keyword z-operator z-ternary z-java">:</span>
+</span></span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">                    <span class="z-support z-class z-java">Optional</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">of</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">MemorySegment</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">ofAddress</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>addr<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-punctuation z-section z-block z-end z-java">}</span></span> <span class="z-meta z-catch z-java"><span class="z-keyword z-control z-exception z-catch z-java">catch</span> </span><span class="z-meta z-catch z-parameters z-java"><span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">NoSuchMethodException</span> <span class="z-variable z-parameter z-java">e</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">            <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-support z-class z-java">Optional</span><span class="z-punctuation z-accessor z-dot z-java">.</span><span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">empty</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-function z-anonymous z-body z-java"><span class="z-meta z-block z-java">    <span class="z-punctuation z-section z-block z-end z-java">}</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<ul>
+<li>不难发现，Demo中调用<code>linker.defaultLookup().find("strlen")</code>时，实际返回一个类型为<code>Optional&lt;MemorySegment&gt;</code>的对象。</li>
+<li>在<code>SystemLookup.libLookup()</code>中，进行了加载本地库，获取函数地址等操作。我们需要研究的，就是在这个方法内。</li>
+</ul>
+<h3 id="jdk-internal-loaderxia-de-ben-di-ku-xiang-guan-shi-li">jdk.internal.loader下的本地库相关实例<a class="zola-anchor" href="#jdk-internal-loaderxia-de-ben-di-ku-xiang-guan-shi-li" aria-label="Anchor link for: jdk-internal-loaderxia-de-ben-di-ku-xiang-guan-shi-li" style="visibility: hidden;"></a>
+</h3>
+<p>在以上代码片段中，<code>NativeLibrary</code>用于表示已加载的本地库。官方给的解释如下：</p>
+<blockquote>
+<p>NativeLibrary represents a loaded native library instance.</p>
+</blockquote>
+<p>在以上代码片段中，<code>RawNativeLibraries</code>用于管理已加载的本地库。它有一个<code>libraries</code>哈希表，显然是用于存放已加载的本地库；提供了<code>load</code>，<code>unload</code>等方法的实现。</p>
+<p>注意，使用<code>RawNativeLibraries::load</code>方法加载的本地库，不会被视为JNI本地库，而是被当成一个普通的本地库对待。<code>RawNativeLIbraries</code>可以加载JNI本地库，但是JNI本地库中，包含<code>JNI_OnLoad</code>和<code>JNI_OnUnload </code>函数，这两个函数会被<code>RawNativeLIbraries</code>忽略，可能导致无法维持原JNI库的功能，同时不支持将JNI本地库中的函数和native方法链接。官方解释如下：</p>
+<blockquote>
+<p>RawNativeLibraries has the following properties: 1. Native libraries loaded in this RawNativeLibraries instance are not JNI native libraries. Hence JNI_OnLoad and JNI_OnUnload will be ignored. No support for linking of native method. 2. Native libraries not auto-unloaded. They may be explicitly unloaded via NativeLibraries::unload. 3. No relationship with class loaders</p>
+</blockquote>
+<p>同时，这里存在另外的类用于加载JNI本地库：<code>NativeLibraries</code>。</p>
+<p>从这我们可以看出来，Project Panama将FFI与JNI做了严格的切割。主要原因有这几点：</p>
+<ol>
+<li>FFI默认需要加载的本地库不是专门为JVM设计的。</li>
+<li>FFI要支持本地库可以被不同的Classloader加载。</li>
+<li>FFI要支持本地库可以根据需要被多次加载。</li>
+</ol>
+<blockquote>
+<p>这也是FFI与JNI重要的不同之处，FFI赢太多了。</p>
+</blockquote>
+<p>在以上代码片段中，不难发现，本地函数的地址由<code>NativeLibrary::lookup()</code>得到。</p>
+<p>实际上，在代码片段<code>SystemLookup.java line:106</code>中，<code>lib</code>的类型最终为<code>RawNativeLibraryImpl</code>。该类为<code>RawNativeLibraries</code>的内部类，继承<code>NativeLibrary</code>。而<code>RawNativeLibraries::load</code>的返回值类型就是<code>RawNativeLibraryImpl</code>，因此本地函数的地址由<code>RawNativeLibraryImpl::lookup()</code>得到。</p>
+<p>但它并没有重写<code>lookup()</code>方法，哈哈！而是重写了<code>find()</code>方法：</p>
+<p><code>RawNativeLibraries.java line:168</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-punctuation z-definition z-annotation z-java">@</span></span><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"><span class="z-variable z-annotation z-java">Override</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-annotation z-java"><span class="z-meta z-annotation z-identifier z-java"></span></span><span class="z-storage z-modifier z-java">public</span> <span class="z-storage z-type z-primitive z-java">long</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">find</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">String</span> name<span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-flow z-return z-java">return</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">findEntry0</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>handle<span class="z-punctuation z-separator z-comma z-java">,</span> name<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></code></pre>
+<p><code>NativeLibrary.java line:48</code></p>
+<pre data-lang="java" class="language-java z-code"><code class="language-java" data-lang="java"><span class="z-source z-java"><span class="z-storage z-modifier z-java">public</span> <span class="z-storage z-modifier z-java">final</span> <span class="z-storage z-type z-primitive z-java">long</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">lookup</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-support z-class z-java">String</span> name<span class="z-punctuation z-section z-parens z-end z-java">)</span></span> throws <span class="z-support z-class z-java">NoSuchMethodException</span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-storage z-type z-primitive z-java">long</span> addr <span class="z-meta z-assignment z-rhs z-java"><span class="z-keyword z-operator z-assignment z-java">=</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">find</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span>name<span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-conditional z-if z-java">if</span> <span class="z-meta z-parens z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-constant z-numeric z-integer z-decimal z-java">0</span> <span class="z-keyword z-operator z-comparison z-java">==</span> addr<span class="z-punctuation z-section z-parens z-end z-java">)</span></span> <span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-begin z-java">{</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">        <span class="z-keyword z-control z-flow z-throw z-java">throw</span> <span class="z-meta z-instantiation z-java"><span class="z-keyword z-other z-storage z-new z-java">new</span> <span class="z-support z-class z-java">NoSuchMethodException</span><span class="z-meta z-parens z-constructor-arguments z-java"><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-string z-quoted z-double z-java"><span class="z-punctuation z-definition z-string z-begin z-java">&quot;</span>Cannot find symbol <span class="z-punctuation z-definition z-string z-end z-java">&quot;</span></span> <span class="z-keyword z-operator z-arithmetic z-java">+</span> name <span class="z-keyword z-operator z-arithmetic z-java">+</span> <span class="z-string z-quoted z-double z-java"><span class="z-punctuation z-definition z-string z-begin z-java">&quot;</span> in library <span class="z-punctuation z-definition z-string z-end z-java">&quot;</span></span> <span class="z-keyword z-operator z-arithmetic z-java">+</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">name</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-section z-parens z-end z-java">)</span></span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-meta z-block z-java">    <span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java">    <span class="z-keyword z-control z-flow z-return z-java">return</span> addr<span class="z-punctuation z-terminator z-java">;</span>
+</span></span><span class="z-source z-java"><span class="z-meta z-block z-java"><span class="z-punctuation z-section z-block z-end z-java">}</span></span>
+</span><span class="z-source z-java">
+</span><span class="z-source z-java"><span class="z-comment z-block z-java"><span class="z-punctuation z-definition z-comment z-java">/*</span>
+</span></span><span class="z-source z-java"><span class="z-comment z-block z-java">    * Returns the address of the named symbol defined in the library of
+</span></span><span class="z-source z-java"><span class="z-comment z-block z-java">    * the given handle.  Returns 0 if not found.
+</span></span><span class="z-source z-java"><span class="z-comment z-block z-java">    <span class="z-punctuation z-definition z-comment z-java">*/</span></span>
+</span><span class="z-source z-java"><span class="z-storage z-modifier z-java">static</span> <span class="z-storage z-modifier z-java">native</span> <span class="z-storage z-type z-primitive z-java">long</span> <span class="z-meta z-function-call z-java"><span class="z-variable z-function z-java">findEntry0</span><span class="z-punctuation z-section z-parens z-begin z-java">(</span><span class="z-storage z-type z-primitive z-java">long</span> handle<span class="z-punctuation z-separator z-comma z-java">,</span> <span class="z-support z-class z-java">String</span> name<span class="z-punctuation z-section z-parens z-end z-java">)</span></span><span class="z-punctuation z-terminator z-java">;</span>
+</span></code></pre>
+<p>至此，我们已经到达了Java宇宙的边界。显然，这里还是用到了JNI，来查找本地函数的地址。</p>
+<h2 id="zong-jie">总结<a class="zola-anchor" href="#zong-jie" aria-label="Anchor link for: zong-jie" style="visibility: hidden;"></a>
+</h2>
+<p>通过这次分析可以看到，FFM API在架构上做出了很大的优化，这一点或许可以说明FFM API的性能优势。</p>
+<p>FFI在加载机制上做出了很大改变，大大提高了互操作性。</p>
+<p>FFM API并没有独立于jdk.internal.misc.Unsafe和JNI存在，但也不是简单的封装，更不是对JNI的修改，而是一种利用关系。</p>
+<p>遗憾的是，这篇文章并没有涉及到<code>MethodHandle</code>相关的分析，没有讲Java FFI是如何实现<code>downcall</code>和<code>upcall</code>的，其中还有很多有趣的技术和解决方案。</p>
+<blockquote>
+<p>参考：</p>
+<p><a rel="nofollow noreferrer" href="https://openjdk.org/jeps/8310626">JEP draft: Foreign Function &amp; Memory API (openjdk.org)</a></p>
+<p><a rel="nofollow noreferrer" href="https://openjdk.org/projects/jdk/21/">JDK 21 (openjdk.org)</a></p>
+</blockquote>
+
+      </article>
+
+      
+      
+
+      
+      
+    </div>
+
+    
+
+
+<footer>
+  <div class="left">
+    <div class="copyright">
+      © 2025 Makai
+      
+      <span>|</span>
+      Built with <a href="https://www.getzola.org" rel="noreferrer" target="_blank">zola</a> and <a href="https://github.com/isunjn/serene" rel="noreferrer" target="_blank">serene</a>
+      
+    </div>
+  </div>
+
+  <div class="right">
+    
+    
+      
+    
+    
+    <a id="rss-btn" href="https://makai410.dev/posts/feed.xml">RSS</a>
+    
+    
+
+    
+    
+    
+    <button id="theme-toggle" aria-label="theme switch">
+      <span class="moon-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z" fill="currentColor"></path></svg>
+</span>
+      <span class="sun-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path d="M12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16ZM11 1H13V4H11V1ZM11 20H13V23H11V20ZM3.51472 4.92893L4.92893 3.51472L7.05025 5.63604L5.63604 7.05025L3.51472 4.92893ZM16.9497 18.364L18.364 16.9497L20.4853 19.0711L19.0711 20.4853L16.9497 18.364ZM19.0711 3.51472L20.4853 4.92893L18.364 7.05025L16.9497 5.63604L19.0711 3.51472ZM5.63604 16.9497L7.05025 18.364L4.92893 20.4853L3.51472 19.0711L5.63604 16.9497ZM23 11V13H20V11H23ZM4 11V13H1V11H4Z" fill="currentColor"></path></svg>
+</span>
+    </button>
+    
+  </div>
+</footer>
+
+
+
+
+<dialog id="rss-mask">
+  <div>
+    <a href="https:&#x2F;&#x2F;makai410.dev&#x2F;posts&#x2F;feed.xml">https:&#x2F;&#x2F;makai410.dev&#x2F;posts&#x2F;feed.xml</a>
+    
+    
+    <button autofocus aria-label="copy" data-link="https:&#x2F;&#x2F;makai410.dev&#x2F;posts&#x2F;feed.xml" data-copy-icon="&lt;svg xmlns=&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2000&#x2F;svg&quot; viewBox=&quot;0 0 24 24&quot; width=&quot;18&quot; height=&quot;18&quot;&gt;&lt;path d=&quot;M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z&quot; fill=&quot;currentColor&quot;&gt;&lt;&#x2F;path&gt;&lt;&#x2F;svg&gt;
+" data-check-icon="&lt;svg xmlns=&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2000&#x2F;svg&quot; viewBox=&quot;0 0 24 24&quot; width=&quot;18&quot; height=&quot;18&quot;&gt;&lt;path d=&quot;M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z&quot; fill=&quot;currentColor&quot;&gt;&lt;&#x2F;path&gt;&lt;&#x2F;svg&gt;
+" >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path d="M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z" fill="currentColor"></path></svg>
+
+    </button>
+  </div>
+</dialog>
+
+
+
+  </main>
+</div>
+
+  
+<script src="/js/lightense.min.js"></script>
+
+
+  <script src="https://makai410.dev/js/main.js"></script>
+</body>
+
+</html>
