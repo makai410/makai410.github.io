@@ -10,7 +10,7 @@ footer = false
 # If you don't want to display id/bio/avatar, simply comment out that line
 name = "Makai"
 id = "makai410"
-bio = "\"who cares about 潮流人士, they don't know that i write code for the Rust compiler.\""
+bio = "ぼんぼらんぼん"
 avatar = "/avatar.png"
 links = [
     { name = "GitHub", icon = "github", url = "https://github.com/makai410" },
