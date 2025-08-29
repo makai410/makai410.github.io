@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  
+  
+    
+  
+  <meta name="description" content="">
+
+  <title>GSoC 2025 Final Report</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="https://makai410.dev/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://makai410.dev/img/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://makai410.dev/img/apple-touch-icon.png">
+  
+  <style>
+
+  /* light mode colors */
+  body {
+    --primary-color: #5871a2;
+    --primary-pale-color: #5871a233;
+    --primary-decoration-color: #5871a210;
+    --bg-color: #ffffff;
+    --text-color: #2f3030;
+    --text-pale-color: #767676;
+    --text-decoration-color: #a9a9a9;
+    --highlight-mark-color: #5f75b020;
+
+    --callout-note-color: #5871a2;
+    --callout-tip-color: #268556;
+    --callout-important-color: #885fc9;
+    --callout-warning-color: #ab6632;
+    --callout-caution-color: #c64e4e;
+  }
+
+  /* dark mode colors */
+  body.dark {
+    --primary-color: #6f8fd1;
+    --primary-pale-color: #6f8fd166;
+    --primary-decoration-color: #6f8fd112;
+    --bg-color: #1c1c1c;
+    --text-color: #c1c1c1;
+    --text-pale-color: #848484;
+    --text-decoration-color: #5f5f5f;
+    --highlight-mark-color: #8296cb3b;
+
+    --callout-note-color: #6f8fd1;
+    --callout-tip-color: #47976f;
+    --callout-important-color: #9776cd;
+    --callout-warning-color: #ad7a52;
+    --callout-caution-color: #d06161;
+  }
+
+  /* typography */
+  body {
+    --main-font: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --code-font: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --homepage-max-width: 768px;
+    --main-max-width: 768px;
+    --avatar-size: 60px;
+    --font-size: 16px;
+    --line-height: 1.75;
+    --img-border-radius: 0px;
+    --detail-border-radius: 0px;
+    --dark-mode-img-brightness: 0.75;
+    --dark-mode-chart-brightness: 0.75;
+    --inline-code-border-radius: 2px;
+    --inline-code-bg-color: var(--primary-decoration-color);
+    --block-code-border-radius: 0px;
+    --block-code-border-color: var(--primary-color);
+    --detail-border-color: var(--primary-color);
+  }
+
+</style>
+
+  <link rel="stylesheet" href="https://makai410.dev/main.css">
+  
+
+<link id="hl" rel="stylesheet" type="text/css" href="/hl-light.css" />
+
+
+
+  
+</head>
+
+<body class="post">
+  
+  <script>
+    const theme = sessionStorage.getItem('theme');
+    const match = window.matchMedia("(prefers-color-scheme: dark)").matches
+    if ((theme && theme == 'dark') || (!theme && match)) {
+      document.body.classList.add('dark');
+      const hl = document.querySelector('link#hl');
+      if (hl) hl.href = 'https://makai410.dev/hl-dark.css';
+    }
+  </script>
+  
+  
+<div id="wrapper">
+  <div id="blank"></div>
+  <aside>
+    
+    
+    <nav>
+      <ul>
+        
+        <li>
+          <a class="h2" href="#overview">Overview</a>
+          
+        </li>
+        
+        <li>
+          <a class="h2" href="#my-work">My work</a>
+          
+          <ul>
+            
+            <li>
+              <a class="h3" href="#refactoring-the-crates-structure">Refactoring the crates structure</a>
+            </li>
+            
+            <li>
+              <a class="h3" href="#establishing-infrastructure">Establishing infrastructure</a>
+            </li>
+            
+            <li>
+              <a class="h3" href="#misc">Misc</a>
+            </li>
+            
+          </ul>
+          
+        </li>
+        
+        <li>
+          <a class="h2" href="#future-work">Future work</a>
+          
+          <ul>
+            
+            <li>
+              <a class="h3" href="#release-automation">Release automation</a>
+            </li>
+            
+            <li>
+              <a class="h3" href="#documentation">Documentation</a>
+            </li>
+            
+            <li>
+              <a class="h3" href="#a-stable-rustc-public-driver">A stable rustc_public driver</a>
+            </li>
+            
+          </ul>
+          
+        </li>
+        
+        <li>
+          <a class="h2" href="#thanks-to">Thanks to</a>
+          
+        </li>
+        
+      </ul>
+    </nav>
+    
+    
+    <button id="back-to-top" aria-label="back to top">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-up"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+
+    </button>
+    
+  </aside>
+  <main>
+    
+<header>
+  <nav>
+    <a href="https:&#x2F;&#x2F;makai410.dev&#x2F;posts">← Back</a>
+  </nav>
+</header>
+
+
+    <div>
+      
+      
+      
+      
+      <div id="copy-cfg" style="display: none;" data-copy-icon="&lt;svg xmlns=&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2000&#x2F;svg&quot; viewBox=&quot;0 0 24 24&quot; width=&quot;18&quot; height=&quot;18&quot;&gt;&lt;path d=&quot;M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z&quot; fill=&quot;currentColor&quot;&gt;&lt;&#x2F;path&gt;&lt;&#x2F;svg&gt;
+" data-check-icon="&lt;svg xmlns=&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2000&#x2F;svg&quot; viewBox=&quot;0 0 24 24&quot; width=&quot;18&quot; height=&quot;18&quot;&gt;&lt;path d=&quot;M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z&quot; fill=&quot;currentColor&quot;&gt;&lt;&#x2F;path&gt;&lt;&#x2F;svg&gt;
+"></div>
+      
+      <article class="prose">
+        <h1>GSoC 2025 Final Report</h1>
+        <div id="post-info">
+          <div id="date">
+            <span id="publish">Aug 29, 2025</span>
+            </div>
+
+          
+          <div id="tags">
+            <a class="instant" href="https://makai410.dev/tags/rust"><span>#</span>Rust</a><a class="instant" href="https://makai410.dev/tags/compiler"><span>#</span>Compiler</a><a class="instant" href="https://makai410.dev/tags/gsoc"><span>#</span>GSoC</a>
+          </div>
+          
+        </div>
+
+        
+        
+
+        
+
+        <p><em>I love making holes in stuff.</em></p>
+<h2 id="overview">Overview<a class="zola-anchor" href="#overview" aria-label="Anchor link for: overview" style="visibility: hidden;"></a>
+</h2>
+<p><a rel="nofollow noreferrer" href="https://summerofcode.withgoogle.com/programs/2025/projects/3y9x5X8O">My project</a> this summer is about <code>stable_mir</code>, a crate that is being developed to be the public API of the Rust compiler.
+<code>stable_mir</code> has undergone many changes so far. We even <a rel="nofollow noreferrer" href="https://rust-lang.zulipchat.com/#narrow/channel/320896-project-stable-mir/topic/Renaming.20StableMIR/near/527945657">renamed</a> <code>stable_mir</code> to a cooler name: <code>rustc_public</code>, which better reflects the project's scope, because nowadays our APIs coverage goes beyond <a rel="nofollow noreferrer" href="https://rustc-dev-guide.rust-lang.org/mir/index.html">MIR</a>, and we don't aim to provide stability in the common sense, e.g., Rust 1.0, that is not what we aim at.</p>
+<p>The high-level goal for this summer is to prepare the <code>rustc_public</code> (a.k.a. <code>stable_mir</code>) crate for publishing. Speaking of which, we aim to publish this crate on crates.io, allowing users to explicitly select it.</p>
+<h2 id="my-work">My work<a class="zola-anchor" href="#my-work" aria-label="Anchor link for: my-work" style="visibility: hidden;"></a>
+</h2>
+<h3 id="refactoring-the-crates-structure">Refactoring the crates structure<a class="zola-anchor" href="#refactoring-the-crates-structure" aria-label="Anchor link for: refactoring-the-crates-structure" style="visibility: hidden;"></a>
+</h3>
+<p>The previous crate structure is the main blocker for publishing. For context, there were two crates in the Rust compiler: <code>stable_mir</code> and <code>rustc_smir</code>. We intend to invert the dependency between them, making <code>rustc_smir</code> completely agnostic of <code>stable_mir</code>. For the full background and the reasons why we want to do that, please refer to <a rel="nofollow noreferrer" href="https://hackmd.io/@celinaval/H1lJBGse0">this proposal</a> for more details. Here I'd like to directly walk through the PRs related to this work.</p>
+<p>Firstly, given that our goal is to reverse the dependency order, which requires a sequence of PRs, we had to figure out a strategy to resolve the circular dependency that would arise during development. For some reason the word "parasitism" came to mind: what if we make <code>stable_mir</code> parasitic on <code>rustc_smir</code>? Therefore:</p>
+<ul>
+<li><a rel="nofollow noreferrer" href="https://github.com/rust-lang/rust/pull/139319">rust-lang/rust#139319</a>
+This PR moved <code>stable_mir</code> into the <code>rustc_smir</code> crate as a module, which was a temporary tweak to resolve the <a rel="nofollow noreferrer" href="https://en.wikipedia.org/wiki/Circular_dependency">circular dependency</a> that would arise if we directly invert the dependency order between <code>rustc_smir</code> and <code>stable_mir</code>.</li>
+</ul>
+<p>Okay, now we can let <code>stable_mir</code> grow freely. Next up:</p>
+<h4 id="implement-compilerinterface">Implement <code>CompilerInterface</code><a class="zola-anchor" href="#implement-compilerinterface" aria-label="Anchor link for: implement-compilerinterface" style="visibility: hidden;"></a>
+</h4>
+<ul>
+<li><a rel="nofollow noreferrer" href="https://github.com/rust-lang/rust/pull/139852">rust-lang/rust#139852</a>
+This PR split the previous <code>Context</code> struct into two parts: <code>SmirInterface</code> and <code>SmirCtxt</code>. See <a rel="nofollow noreferrer" href="https://hackmd.io/@celinaval/H1lJBGse0#Examples">this section</a> for more details. After this PR was merged, our code was like:</li>
+</ul>
+<pre data-lang="rust" class="language-rust z-code"><code class="language-rust" data-lang="rust"><span class="z-source z-rust"><span class="z-comment z-line z-double-slash z-rust"><span class="z-punctuation z-definition z-comment z-rust">//</span> stable_mir/compiler_interface.rs
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> Stable public API for querying compiler information.
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span>
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> All queries are delegated to an internal [`SmirCtxt`] that provides
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> similar APIs but based on internal rustc constructs.
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span>
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> Do not use this directly. This is currently used in the macro expansion.
+</span></span><span class="z-source z-rust"><span class="z-storage z-modifier z-rust">pub</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span><span class="z-keyword z-other z-rust">crate</span></span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-end z-rust">)</span></span> <span class="z-meta z-struct z-rust"><span class="z-storage z-type z-struct z-rust">struct</span> </span><span class="z-meta z-struct z-rust"><span class="z-meta z-generic z-rust"><span class="z-entity z-name z-struct z-rust">SmirInterface</span><span class="z-meta z-generic z-rust"><span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span></span></span><span class="z-meta z-struct z-rust"> </span><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-begin z-rust">{</span>
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust">    <span class="z-storage z-modifier z-rust">pub</span><span class="z-punctuation z-definition z-modifier-scope z-begin z-rust">(</span><span class="z-storage z-modifier z-rust">crate</span><span class="z-punctuation z-definition z-modifier-scope z-end z-rust">)</span> <span class="z-variable z-other z-member z-rust">cx</span><span class="z-punctuation z-separator z-type z-rust">:</span> <span class="z-meta z-generic z-rust">SmirCtxt<span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span>,
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust"></span><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-end z-rust">}</span></span></span>
+</span><span class="z-source z-rust">
+</span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-storage z-type z-impl z-rust">impl</span></span><span class="z-meta z-impl z-rust"><span class="z-meta z-generic z-rust"><span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span></span><span class="z-meta z-impl z-rust"> <span class="z-entity z-name z-impl z-rust">SmirInterface</span><span class="z-meta z-generic z-rust"><span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span> </span><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-begin z-rust">{</span>
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust">    <span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> Obtain the representation of a type.
+</span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust">    <span class="z-storage z-modifier z-rust">pub</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span><span class="z-keyword z-other z-rust">crate</span></span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-end z-rust">)</span></span> <span class="z-meta z-function z-rust"><span class="z-meta z-function z-rust"><span class="z-storage z-type z-function z-rust">fn</span> </span><span class="z-entity z-name z-function z-rust">ty_kind</span></span><span class="z-meta z-function z-rust"><span class="z-meta z-function z-parameters z-rust"><span class="z-punctuation z-section z-parameters z-begin z-rust">(</span><span class="z-keyword z-operator z-rust">&amp;</span><span class="z-variable z-parameter z-rust">self</span>, <span class="z-variable z-parameter z-rust">ty</span><span class="z-punctuation z-separator z-rust">:</span> Ty</span><span class="z-meta z-function z-rust"><span class="z-meta z-function z-parameters z-rust"><span class="z-punctuation z-section z-parameters z-end z-rust">)</span></span></span></span><span class="z-meta z-function z-rust"> <span class="z-meta z-function z-return-type z-rust"><span class="z-punctuation z-separator z-rust">-&gt;</span> TyKind</span> </span><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-begin z-rust">{</span>
+</span></span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust">        <span class="z-variable z-language z-rust">self</span><span class="z-punctuation z-accessor z-dot z-rust">.</span>cx<span class="z-punctuation z-accessor z-dot z-rust">.</span><span class="z-support z-function z-rust">ty_kind</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span>ty</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-end z-rust">)</span></span>
+</span></span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust">    </span><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-end z-rust">}</span></span></span>
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"></span><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-end z-rust">}</span></span></span>
+</span><span class="z-source z-rust">
+</span><span class="z-source z-rust">
+</span><span class="z-source z-rust"><span class="z-comment z-line z-double-slash z-rust"><span class="z-punctuation z-definition z-comment z-rust">//</span> rustc_smir/context.rs
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> Provides direct access to rustc&#39;s internal queries.
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span>
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> The [`crate::stable_mir::compiler_interface::SmirInterface`] must go through
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> this context to obtain rustc-level information.
+</span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-storage z-modifier z-rust">pub</span> <span class="z-storage z-type z-struct z-rust">struct</span> </span><span class="z-meta z-struct z-rust"><span class="z-meta z-generic z-rust"><span class="z-entity z-name z-struct z-rust">SmirCtxt</span><span class="z-meta z-generic z-rust"><span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span></span></span><span class="z-meta z-struct z-rust"></span><span class="z-meta z-struct z-rust"><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span>pub <span class="z-meta z-generic z-rust">RefCell<span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-meta z-generic z-rust">Tables<span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span></span><span class="z-punctuation z-section z-group z-end z-rust">)</span></span><span class="z-punctuation z-terminator z-rust">;</span>
+</span><span class="z-source z-rust">
+</span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-storage z-type z-impl z-rust">impl</span></span><span class="z-meta z-impl z-rust"><span class="z-meta z-generic z-rust"><span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span></span><span class="z-meta z-impl z-rust"> <span class="z-entity z-name z-impl z-rust">SmirCtxt</span><span class="z-meta z-generic z-rust"><span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span> </span><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-begin z-rust">{</span>
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust">    <span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> Obtain the representation of a type.
+</span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust">    <span class="z-meta z-function z-rust"><span class="z-meta z-function z-rust"><span class="z-storage z-modifier z-rust">pub</span> <span class="z-storage z-type z-function z-rust">fn</span> </span><span class="z-entity z-name z-function z-rust">ty_kind</span></span><span class="z-meta z-function z-rust"><span class="z-meta z-function z-parameters z-rust"><span class="z-punctuation z-section z-parameters z-begin z-rust">(</span><span class="z-keyword z-operator z-rust">&amp;</span><span class="z-variable z-parameter z-rust">self</span>, <span class="z-variable z-parameter z-rust">ty</span><span class="z-punctuation z-separator z-rust">:</span> <span class="z-meta z-path z-rust">stable_mir<span class="z-punctuation z-accessor z-rust">::</span></span><span class="z-meta z-path z-rust">ty<span class="z-punctuation z-accessor z-rust">::</span></span>Ty</span><span class="z-meta z-function z-rust"><span class="z-meta z-function z-parameters z-rust"><span class="z-punctuation z-section z-parameters z-end z-rust">)</span></span></span></span><span class="z-meta z-function z-rust"> <span class="z-meta z-function z-return-type z-rust"><span class="z-punctuation z-separator z-rust">-&gt;</span> TyKind</span> </span><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-begin z-rust">{</span>
+</span></span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust">        <span class="z-storage z-type z-rust">let</span> <span class="z-storage z-modifier z-rust">mut</span> tables <span class="z-keyword z-operator z-assignment z-rust">=</span> <span class="z-variable z-language z-rust">self</span><span class="z-punctuation z-accessor z-dot z-rust">.</span><span class="z-constant z-numeric z-float z-rust">0.</span><span class="z-support z-function z-rust">borrow_mut</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span></span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-end z-rust">)</span></span><span class="z-punctuation z-terminator z-rust">;</span>
+</span></span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust">        tables<span class="z-punctuation z-accessor z-dot z-rust">.</span>types<span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">[</span>ty<span class="z-punctuation z-section z-group z-end z-rust">]</span></span><span class="z-punctuation z-accessor z-dot z-rust">.</span><span class="z-support z-function z-rust">kind</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span></span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-end z-rust">)</span></span><span class="z-punctuation z-accessor z-dot z-rust">.</span><span class="z-support z-function z-rust">stable</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span><span class="z-keyword z-operator z-bitwise z-rust">&amp;</span><span class="z-storage z-modifier z-rust">mut</span> <span class="z-keyword z-operator z-arithmetic z-rust">*</span>tables</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-end z-rust">)</span></span>
+</span></span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust">    </span><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-end z-rust">}</span></span></span>
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"></span><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-end z-rust">}</span></span></span>
+</span></code></pre>
+<p>This was getting close to what we anticipated. xD</p>
+<h4 id="refactor-stablemir">Refactor StableMIR<a class="zola-anchor" href="#refactor-stablemir" aria-label="Anchor link for: refactor-stablemir" style="visibility: hidden;"></a>
+</h4>
+<ul>
+<li><a rel="nofollow noreferrer" href="https://github.com/rust-lang/rust/pull/140643">rust-lang/rust#140643</a>
+This was a huge PR that completed most of the refactoring and introduced many implementation details. I don't want to list them one by one here. By the way, the most painful part of this work was manually <a rel="nofollow noreferrer" href="https://github.com/rust-lang/rust/pull/140643/files#diff-610545890aa062638aa875d81f8f07280e92c113b5df9f34ffdff6e29b487ce0">rewriting</a> nearly a hundred APIs .</li>
+</ul>
+<p>Now that we've finished the refactoring, let's move it back!</p>
+<ul>
+<li><a rel="nofollow noreferrer" href="https://github.com/rust-lang/rust/pull/143524">rust-lang/rust#143524</a>
+This PR moved <code>stable_mir</code> back to its own crate.</li>
+</ul>
+<p>Finally, we renamed <code>stable_mir</code> to <code>rustc_public</code>, and <code>rustc_smir</code> to <code>rustc_public_bridge</code>.</p>
+<ul>
+<li><a rel="nofollow noreferrer" href="https://github.com/rust-lang/rust/pull/143848">rust-lang/rust#143848</a></li>
+<li><a rel="nofollow noreferrer" href="https://github.com/rust-lang/rust/pull/143985">rust-lang/rust#143985</a></li>
+<li><a rel="nofollow noreferrer" href="https://github.com/rust-lang/rust/pull/144290">rust-lang/rust#144290</a></li>
+</ul>
+<p>At the end of the day, the code above now looks like:</p>
+<pre data-lang="rust" class="language-rust z-code"><code class="language-rust" data-lang="rust"><span class="z-source z-rust"><span class="z-comment z-line z-double-slash z-rust"><span class="z-punctuation z-definition z-comment z-rust">//</span> rustc_public/compiler_interface.rs
+</span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-storage z-type z-impl z-rust">impl</span></span><span class="z-meta z-impl z-rust"><span class="z-meta z-generic z-rust"><span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span></span><span class="z-meta z-impl z-rust"> CompilerInterface <span class="z-keyword z-other z-rust">for</span></span><span class="z-meta z-impl z-rust"> <span class="z-entity z-name z-impl z-rust">Container</span><span class="z-meta z-generic z-rust"><span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span>, BridgeTys<span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span> </span><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-begin z-rust">{</span>
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust">    <span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> Obtain the kind of a type.
+</span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust">    <span class="z-meta z-function z-rust"><span class="z-meta z-function z-rust"><span class="z-storage z-type z-function z-rust">fn</span> </span><span class="z-entity z-name z-function z-rust">ty_kind</span></span><span class="z-meta z-function z-rust"><span class="z-meta z-function z-parameters z-rust"><span class="z-punctuation z-section z-parameters z-begin z-rust">(</span><span class="z-keyword z-operator z-rust">&amp;</span><span class="z-variable z-parameter z-rust">self</span>, <span class="z-variable z-parameter z-rust">ty</span><span class="z-punctuation z-separator z-rust">:</span> Ty</span><span class="z-meta z-function z-rust"><span class="z-meta z-function z-parameters z-rust"><span class="z-punctuation z-section z-parameters z-end z-rust">)</span></span></span></span><span class="z-meta z-function z-rust"> <span class="z-meta z-function z-return-type z-rust"><span class="z-punctuation z-separator z-rust">-&gt;</span> TyKind</span> </span><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-begin z-rust">{</span>
+</span></span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust">        <span class="z-storage z-type z-rust">let</span> <span class="z-storage z-modifier z-rust">mut</span> tables <span class="z-keyword z-operator z-assignment z-rust">=</span> <span class="z-variable z-language z-rust">self</span><span class="z-punctuation z-accessor z-dot z-rust">.</span>tables<span class="z-punctuation z-accessor z-dot z-rust">.</span><span class="z-support z-function z-rust">borrow_mut</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span></span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-end z-rust">)</span></span><span class="z-punctuation z-terminator z-rust">;</span>
+</span></span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust">        <span class="z-storage z-type z-rust">let</span> cx <span class="z-keyword z-operator z-assignment z-rust">=</span> <span class="z-keyword z-operator z-bitwise z-rust">&amp;</span><span class="z-keyword z-operator z-arithmetic z-rust">*</span><span class="z-variable z-language z-rust">self</span><span class="z-punctuation z-accessor z-dot z-rust">.</span>cx<span class="z-punctuation z-accessor z-dot z-rust">.</span><span class="z-support z-function z-rust">borrow</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span></span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-end z-rust">)</span></span><span class="z-punctuation z-terminator z-rust">;</span>
+</span></span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust">        cx<span class="z-punctuation z-accessor z-dot z-rust">.</span><span class="z-support z-function z-rust">ty_kind</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span>tables<span class="z-punctuation z-accessor z-dot z-rust">.</span>types<span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">[</span>ty<span class="z-punctuation z-section z-group z-end z-rust">]</span></span></span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-end z-rust">)</span></span><span class="z-punctuation z-accessor z-dot z-rust">.</span><span class="z-support z-function z-rust">stable</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-begin z-rust">(</span><span class="z-keyword z-operator z-bitwise z-rust">&amp;</span><span class="z-storage z-modifier z-rust">mut</span> <span class="z-keyword z-operator z-arithmetic z-rust">*</span>tables<span class="z-punctuation z-separator z-rust">,</span> cx</span><span class="z-meta z-group z-rust"><span class="z-punctuation z-section z-group z-end z-rust">)</span></span>
+</span></span></span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"><span class="z-meta z-function z-rust"><span class="z-meta z-block z-rust">    </span><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-end z-rust">}</span></span></span>
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-impl z-rust"><span class="z-meta z-block z-rust"></span><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-end z-rust">}</span></span></span>
+</span><span class="z-source z-rust">
+</span><span class="z-source z-rust">
+</span><span class="z-source z-rust"><span class="z-comment z-line z-double-slash z-rust"><span class="z-punctuation z-definition z-comment z-rust">//</span> rustc_public_bridge/context/mod.rs
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> Provides direct access to rustc&#39;s internal queries.
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span>
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> `CompilerInterface` must go through
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> this context to obtain internal information.
+</span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-storage z-modifier z-rust">pub</span> <span class="z-storage z-type z-struct z-rust">struct</span> </span><span class="z-meta z-struct z-rust"><span class="z-meta z-generic z-rust"><span class="z-entity z-name z-struct z-rust">CompilerCtxt</span><span class="z-meta z-generic z-rust"><span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span>, B<span class="z-punctuation z-separator z-rust">:</span> Bridge<span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span></span></span><span class="z-meta z-struct z-rust"> </span><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-begin z-rust">{</span>
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust">    <span class="z-storage z-modifier z-rust">pub</span> <span class="z-variable z-other z-member z-rust">tcx</span><span class="z-punctuation z-separator z-type z-rust">:</span> <span class="z-meta z-generic z-rust">TyCtxt<span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span>,
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust">    <span class="z-variable z-other z-member z-rust">_marker</span><span class="z-punctuation z-separator z-type z-rust">:</span> <span class="z-meta z-generic z-rust">PhantomData<span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span>B<span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span>,
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust"></span><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-end z-rust">}</span></span></span>
+</span><span class="z-source z-rust">
+</span><span class="z-source z-rust">
+</span><span class="z-source z-rust"><span class="z-comment z-line z-double-slash z-rust"><span class="z-punctuation z-definition z-comment z-rust">//</span> rustc_public_bridge/lib.rs
+</span></span><span class="z-source z-rust"><span class="z-comment z-line z-documentation z-rust"><span class="z-punctuation z-definition z-comment z-rust">///</span> A container which is used for TLS.
+</span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-storage z-modifier z-rust">pub</span> <span class="z-storage z-type z-struct z-rust">struct</span> </span><span class="z-meta z-struct z-rust"><span class="z-meta z-generic z-rust"><span class="z-entity z-name z-struct z-rust">Container</span><span class="z-meta z-generic z-rust"><span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span>, B<span class="z-punctuation z-separator z-rust">:</span> Bridge<span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span></span></span><span class="z-meta z-struct z-rust"> </span><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-begin z-rust">{</span>
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust">    <span class="z-storage z-modifier z-rust">pub</span> <span class="z-variable z-other z-member z-rust">tables</span><span class="z-punctuation z-separator z-type z-rust">:</span> <span class="z-meta z-generic z-rust">RefCell<span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-meta z-generic z-rust">Tables<span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span>, B<span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span>,
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust">    <span class="z-storage z-modifier z-rust">pub</span> <span class="z-variable z-other z-member z-rust">cx</span><span class="z-punctuation z-separator z-type z-rust">:</span> <span class="z-meta z-generic z-rust">RefCell<span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-meta z-generic z-rust">CompilerCtxt<span class="z-punctuation z-definition z-generic z-begin z-rust">&lt;</span><span class="z-storage z-modifier z-lifetime z-rust">&#39;tcx</span>, B<span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span><span class="z-punctuation z-definition z-generic z-end z-rust">&gt;</span></span>,
+</span></span></span><span class="z-source z-rust"><span class="z-meta z-struct z-rust"><span class="z-meta z-block z-rust"></span><span class="z-meta z-block z-rust"><span class="z-punctuation z-section z-block z-end z-rust">}</span></span></span>
+</span></code></pre>
+<h3 id="establishing-infrastructure">Establishing infrastructure<a class="zola-anchor" href="#establishing-infrastructure" aria-label="Anchor link for: establishing-infrastructure" style="visibility: hidden;"></a>
+</h3>
+<p>For context, we'd maintain two versions of <code>rustc_public</code>, the crates.io version and the rustc version. The first will be published on crates.io and follow semantic versioning, while the second will track internal changes and serve as the base for each new major release.</p>
+<p>For this to happen, we leverage <a rel="nofollow noreferrer" href="https://github.com/rust-lang/josh-sync">rustc-josh-sync</a> to sync changes as we see fit. We've cloned <code>rustc_public</code> into our own repo in <a rel="nofollow noreferrer" href="https://github.com/rust-lang/project-stable-mir/pull/104">rust-lang/project-stable-mir#104</a>. We'd enable the josh cronjob in <a rel="nofollow noreferrer" href="https://github.com/rust-lang/project-stable-mir/pull/107">rust-lang/project-stable-mir#107</a>.</p>
+<h4 id="devtool">Devtool<a class="zola-anchor" href="#devtool" aria-label="Anchor link for: devtool" style="visibility: hidden;"></a>
+</h4>
+<ul>
+<li><a rel="nofollow noreferrer" href="https://github.com/rust-lang/project-stable-mir/pull/105">rust-lang/project-stable-mir#105</a>
+This is a development helper for maintaining <code>rustc_public</code>. Currently it supports commands like <code>build</code>, <code>test [--bless] [--verbose]</code>, <code>clean</code>, <code>fmt [--check]</code>, <code>githook install/uninstall</code>, and <code>help</code>. To stay consistent with the rustc development experience, I named our shell script x, so contributors can simply run commands like <code>./x build</code> or <code>./x test</code>.</li>
+</ul>
+<h4 id="build-time-check">Build-time check<a class="zola-anchor" href="#build-time-check" aria-label="Anchor link for: build-time-check" style="visibility: hidden;"></a>
+</h4>
+<ul>
+<li>also in <a rel="nofollow noreferrer" href="https://github.com/rust-lang/project-stable-mir/pull/105">rust-lang/project-stable-mir#105</a>
+I write a simple <code>build.rs</code> to warn the user if they are using an unsupported rustc version and makes the build fail, while providing some suggestions.</li>
+</ul>
+<h4 id="compiletest">Compiletest<a class="zola-anchor" href="#compiletest" aria-label="Anchor link for: compiletest" style="visibility: hidden;"></a>
+</h4>
+<ul>
+<li>also in <a rel="nofollow noreferrer" href="https://github.com/rust-lang/project-stable-mir/pull/105">rust-lang/project-stable-mir#105</a>
+This is a test script leveraging the <a rel="nofollow noreferrer" href="https://github.com/oli-obk/ui_test/"><code>ui_test</code></a> crate to run all test suites we now have.</li>
+</ul>
+<p>That said, at the time I wrote this, <a rel="nofollow noreferrer" href="https://github.com/rust-lang/project-stable-mir/pull/105">rust-lang/project-stable-mir#105</a> was still under review.</p>
+<h3 id="misc">Misc<a class="zola-anchor" href="#misc" aria-label="Anchor link for: misc" style="visibility: hidden;"></a>
+</h3>
+<ul>
+<li>Removed a FIXME from <code>rustc_public</code>: <a rel="nofollow noreferrer" href="https://github.com/rust-lang/rust/pull/144392">rust-lang/rust#144392</a>.</li>
+<li>Fixed a missing parenthesis in pretty printing: <a rel="nofollow noreferrer" href="https://github.com/rust-lang/rust/pull/145119">rust-lang/rust#145119</a></li>
+<li>Fix book deployment CI: <a rel="nofollow noreferrer" href="https://github.com/rust-lang/project-stable-mir/pull/106">rust-lang/project-stable-mir#106</a></li>
+<li>Fix the rustc_public demo: <a rel="nofollow noreferrer" href="https://github.com/rust-lang/project-stable-mir/pull/108">rust-lang/project-stable-mir#108</a></li>
+</ul>
+<h2 id="future-work">Future work<a class="zola-anchor" href="#future-work" aria-label="Anchor link for: future-work" style="visibility: hidden;"></a>
+</h2>
+<h3 id="release-automation">Release automation<a class="zola-anchor" href="#release-automation" aria-label="Anchor link for: release-automation" style="visibility: hidden;"></a>
+</h3>
+<p>I plan to implement a release automation CI that runs cargo-semver-checks, automatically bumps the crate version, and update the <code>rustc_public</code> to crates.io.</p>
+<h3 id="documentation">Documentation<a class="zola-anchor" href="#documentation" aria-label="Anchor link for: documentation" style="visibility: hidden;"></a>
+</h3>
+<p><code>rustc_public</code> currently lacks proper documentation. I'd love to help create a dedicated section for <code>rustc_public</code> on rustc-dev-guide.rust-lang.org, and write the contributing guide for it.</p>
+<h3 id="a-stable-rustc-public-driver">A stable rustc_public driver<a class="zola-anchor" href="#a-stable-rustc-public-driver" aria-label="Anchor link for: a-stable-rustc-public-driver" style="visibility: hidden;"></a>
+</h3>
+<p>At the moment, there is no stable way to drive rustc_public. We only have a <code>rustc_internal::run!()</code> macro to drive it, which is however in the <code>unstable/</code>. We’d really like to have a more fully-featured, stable driver.</p>
+<h2 id="thanks-to">Thanks to<a class="zola-anchor" href="#thanks-to" aria-label="Anchor link for: thanks-to" style="visibility: hidden;"></a>
+</h2>
+<ul>
+<li>My mentor Celina Val, who’s been very patient and helped me learn a lot.</li>
+<li>oli-obk, who suggested setting up the josh sync and reviewed many of my PRs.</li>
+<li>beef :3</li>
+<li>Jakub Beránek, who helped me understand the josh sync better.</li>
+<li>Jieyou Xu, I don't know but I just want to say thanks :3</li>
+<li>The infra team.</li>
+<li>Everyone I've chatted with on Zulip so far.</li>
+<li>The Rust Foundation.</li>
+<li>Google, definitely.</li>
+</ul>
+
+      </article>
+
+      
+      
+
+      
+      
+    </div>
+
+    
+
+
+<footer>
+  <div class="left">
+    <div class="copyright">
+      © 2025 Makai
+      
+      <span>|</span>
+      Built with <a href="https://www.getzola.org" rel="noreferrer" target="_blank">zola</a> and <a href="https://github.com/isunjn/serene" rel="noreferrer" target="_blank">serene</a>
+      
+    </div>
+  </div>
+
+  <div class="right">
+    
+    
+      
+    
+    
+    <a id="rss-btn" href="https://makai410.dev/posts/feed.xml">RSS</a>
+    
+    
+
+    
+    
+    
+    <button id="theme-toggle" aria-label="theme switch">
+      <span class="moon-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z" fill="currentColor"></path></svg>
+</span>
+      <span class="sun-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path d="M12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16ZM11 1H13V4H11V1ZM11 20H13V23H11V20ZM3.51472 4.92893L4.92893 3.51472L7.05025 5.63604L5.63604 7.05025L3.51472 4.92893ZM16.9497 18.364L18.364 16.9497L20.4853 19.0711L19.0711 20.4853L16.9497 18.364ZM19.0711 3.51472L20.4853 4.92893L18.364 7.05025L16.9497 5.63604L19.0711 3.51472ZM5.63604 16.9497L7.05025 18.364L4.92893 20.4853L3.51472 19.0711L5.63604 16.9497ZM23 11V13H20V11H23ZM4 11V13H1V11H4Z" fill="currentColor"></path></svg>
+</span>
+    </button>
+    
+  </div>
+</footer>
+
+
+
+
+<dialog id="rss-mask">
+  <div>
+    <a href="https:&#x2F;&#x2F;makai410.dev&#x2F;posts&#x2F;feed.xml">https:&#x2F;&#x2F;makai410.dev&#x2F;posts&#x2F;feed.xml</a>
+    
+    
+    <button autofocus aria-label="copy" data-link="https:&#x2F;&#x2F;makai410.dev&#x2F;posts&#x2F;feed.xml" data-copy-icon="&lt;svg xmlns=&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2000&#x2F;svg&quot; viewBox=&quot;0 0 24 24&quot; width=&quot;18&quot; height=&quot;18&quot;&gt;&lt;path d=&quot;M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z&quot; fill=&quot;currentColor&quot;&gt;&lt;&#x2F;path&gt;&lt;&#x2F;svg&gt;
+" data-check-icon="&lt;svg xmlns=&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2000&#x2F;svg&quot; viewBox=&quot;0 0 24 24&quot; width=&quot;18&quot; height=&quot;18&quot;&gt;&lt;path d=&quot;M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z&quot; fill=&quot;currentColor&quot;&gt;&lt;&#x2F;path&gt;&lt;&#x2F;svg&gt;
+" >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path d="M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z" fill="currentColor"></path></svg>
+
+    </button>
+  </div>
+</dialog>
+
+
+
+  </main>
+</div>
+
+  
+<script src="/js/lightense.min.js"></script>
+
+
+  <script src="https://makai410.dev/js/main.js"></script>
+</body>
+
+</html>
