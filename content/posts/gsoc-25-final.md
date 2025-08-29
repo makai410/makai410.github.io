@@ -28,7 +28,7 @@ Firstly, given that our ulitmate goal is to reverse the dependency order, which 
 - [rust-lang/rust#139319](https://github.com/rust-lang/rust/pull/139319)
 This PR moved `stable_mir` into the `rustc_smir` crate as a module, which was a temporary tweak to resolve the [circular dependency](https://en.wikipedia.org/wiki/Circular_dependency) that would arise if we directly invert the dependency order between `rustc_smir` and `stable_mir`.
 
-Okay, now we can freely feed `stable_mir` to grow up. What's next? It is:
+Okay, now we can let `stable_mir` grow freely. Next up:
 
 #### Implement `CompilerInterface`
 - [rust-lang/rust#139852](https://github.com/rust-lang/rust/pull/139852)
@@ -144,19 +144,21 @@ That said, by the time I wrote this sentence, [rust-lang/project-stable-mir#105]
 ## Future work
 
 ### Release automation
-I was planning to implement a release automation CI, 
+I plan to implement a release automation CI that runs cargo-semver-checks, automatically bumps the crate version, and update the `rustc_public` to crates.io.
 
 ### Documentation
+`rustc_public` currently lacks proper documentation. I'd love to help create a dedicated section for `rustc_public` on rustc-dev-guide.rust-lang.org, and write the contributing guide for it.
 
 ### A stable rustc_public driver
+At the moment, there is no stable way to drive rustc_public. We only have a `rustc_internal::run!()` macro to drive it, which is however in the `unstable/`. We’d really like to have a more fully-featured, stable driver.
 
 ## Thanks to
 - My mentor Celina Val, who’s been very patient and helped me learn a lot.
-- oli-obk, who suggested me to set up the josh sync, and reviewed dozens of my PRs.
+- oli-obk, who suggested setting up the josh sync and reviewed many of my PRs.
 - Deadbeef :3
-- Jakub Beránek, who helped me learn more about the josh.
+- Jakub Beránek, who helped me understand the josh sync better.
 - Jieyou Xu, I don't know but I just want to say thanks :3
-- the infra team.
-- everyone that I've chatted with on Zulip so far.
-- the Rust Foundation.
+- The infra team.
+- Everyone I've chatted with on Zulip so far.
+- The Rust Foundation.
 - Google, definitely.
