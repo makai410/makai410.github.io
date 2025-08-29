@@ -16,7 +16,7 @@ _I love making holes in stuff._
 
 ## Overview
 [My project](https://summerofcode.withgoogle.com/programs/2025/projects/3y9x5X8O) this summer is about `stable_mir`, a crate that is being developed to be the public API of the Rust compiler.
-Things in `stable_mir` have been changed a lot so far. We even [renamed](https://rust-lang.zulipchat.com/#narrow/channel/320896-project-stable-mir/topic/Renaming.20StableMIR/near/527945657) `stable_mir` to a cooler name: `rustc_public`, which better reflects the project's scope, because nowadays our APIs coverage goes beyond [MIR](https://rustc-dev-guide.rust-lang.org/mir/index.html), and we don't aim to provide stability in the common sense, e.g., Rust 1.0, that is not what we aim at.
+`stable_mir` has undergone many changes so far. We even [renamed](https://rust-lang.zulipchat.com/#narrow/channel/320896-project-stable-mir/topic/Renaming.20StableMIR/near/527945657) `stable_mir` to a cooler name: `rustc_public`, which better reflects the project's scope, because nowadays our APIs coverage goes beyond [MIR](https://rustc-dev-guide.rust-lang.org/mir/index.html), and we don't aim to provide stability in the common sense, e.g., Rust 1.0, that is not what we aim at.
 
 The high-level goal for this summer is to prepare the `rustc_public` (a.k.a. `stable_mir`) crate for publishing. Speaking of which, we aim to publish this crate on crates.io, allowing users to explicitly select it.
 
@@ -24,7 +24,7 @@ The high-level goal for this summer is to prepare the `rustc_public` (a.k.a. `st
 ### Refactoring the crates structure
 The previous crate structure is the main blocker for publishing. For context, there were two crates in the Rust compiler: `stable_mir` and `rustc_smir`. We intend to invert the dependency between them, making `rustc_smir` completely agnostic of `stable_mir`. For the full background and the reasons why we want to do that, please refer to [this proposal](https://hackmd.io/@celinaval/H1lJBGse0) for more details. Here I'd like to directly walk through the PRs related to this work.
 
-Firstly, given that our ulitmate goal is to reverse the dependency order, which should be accomplished with a sequence of PRs, we have to figure out the strategy to resolve the circular dependency that would occur during the development process. For some reason the word "parasitism" came to mind: what if we make `stable_mir` parasitic on `rustc_smir`? Therefore:
+Firstly, given that our goal is to reverse the dependency order, which requires a sequence of PRs, we had to figure out a strategy to resolve the circular dependency that would arise during development. For some reason the word "parasitism" came to mind: what if we make `stable_mir` parasitic on `rustc_smir`? Therefore:
 - [rust-lang/rust#139319](https://github.com/rust-lang/rust/pull/139319)
 This PR moved `stable_mir` into the `rustc_smir` crate as a module, which was a temporary tweak to resolve the [circular dependency](https://en.wikipedia.org/wiki/Circular_dependency) that would arise if we directly invert the dependency order between `rustc_smir` and `stable_mir`.
 
