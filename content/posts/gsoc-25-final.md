@@ -118,7 +118,7 @@ pub struct Container<'tcx, B: Bridge> {
 ### Establishing infrastructure
 For context, we'd maintain two versions of `rustc_public`, the crates.io version and the rustc version. The first will be published on crates.io and follow semantic versioning, while the second will track internal changes and serve as the base for each new major release.
 
-For this to happen, we leverage [rustc-josh-sync](github.com/rust-lang/josh-sync) to sync changes as we see fit. We've cloned `rustc_public` into our own repo in [rust-lang/project-stable-mir#104](https://github.com/rust-lang/project-stable-mir/pull/104). We'd enable the josh cronjob in [rust-lang/project-stable-mir#107](https://github.com/rust-lang/project-stable-mir/pull/107).
+For this to happen, we leverage [rustc-josh-sync](https://github.com/rust-lang/josh-sync) to sync changes as we see fit. We've cloned `rustc_public` into our own repo in [rust-lang/project-stable-mir#104](https://github.com/rust-lang/project-stable-mir/pull/104). We'd enable the josh cronjob in [rust-lang/project-stable-mir#107](https://github.com/rust-lang/project-stable-mir/pull/107).
 
 #### Devtool
 - [rust-lang/project-stable-mir#105](https://github.com/rust-lang/project-stable-mir/pull/105)
