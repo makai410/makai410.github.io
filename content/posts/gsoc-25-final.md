@@ -126,13 +126,13 @@ This is a development helper for maintaining `rustc_public`. Currently it suppor
 
 #### Build-time check
 - also in [rust-lang/project-stable-mir#105](https://github.com/rust-lang/project-stable-mir/pull/105)
-I write a simple `build.rs` to warn the user using an unsupported rustc version, make the build fail with emitting some suggestions.
+I write a simple `build.rs` to warn the user if they are using an unsupported rustc version and makes the build fail, while providing some suggestions.
 
 #### Compiletest
 - also in [rust-lang/project-stable-mir#105](https://github.com/rust-lang/project-stable-mir/pull/105)
 This is a test script leveraging the [`ui_test`](https://github.com/oli-obk/ui_test/) crate to run all test suites we now have.
 
-That said, by the time I wrote this sentence, [rust-lang/project-stable-mir#105](https://github.com/rust-lang/project-stable-mir/pull/105) was still under review.
+That said, at the time I wrote this, [rust-lang/project-stable-mir#105](https://github.com/rust-lang/project-stable-mir/pull/105) was still under review.
 
 ### Misc
 - Removed a FIXME from `rustc_public`: [rust-lang/rust#144392](https://github.com/rust-lang/rust/pull/144392).
