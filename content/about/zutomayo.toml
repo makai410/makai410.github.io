@@ -1,9 +1,25 @@
 [[collection]]
 type="box"
+img="/assets/Nouriueno Cracker.jpg"
+link="https://music.youtube.com/watch?v=3iAXclHlTTg&si=XGv2Q9ltyb9XVc1H"
+rotate=true
+title="Nouriueno Cracker"
+subtitle="ZUTOMAYO"
+
+[[collection]]
+type="box"
 img="/assets/hunchgray.jpeg"
 link="https://youtu.be/ugpywe34_30?si=DepIQE1z_95qDJ5j"
 rotate=true
 title="Hunch Gray"
+subtitle="ZUTOMAYO"
+
+[[collection]]
+type="box"
+img="/assets/Minority Myakuraku.jpg"
+link="https://music.youtube.com/watch?v=JClp1OzhDqI&si=dXFZvwbfzn7jur2V"
+rotate=true
+title="Minority Myakuraku"
 subtitle="ZUTOMAYO"
 
 [[collection]]

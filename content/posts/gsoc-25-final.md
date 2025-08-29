@@ -155,7 +155,7 @@ At the moment, there is no stable way to drive rustc_public. We only have a `rus
 ## Thanks to
 - My mentor Celina Val, who’s been very patient and helped me learn a lot.
 - oli-obk, who suggested setting up the josh sync and reviewed many of my PRs.
-- Deadbeef :3
+- beef :3
 - Jakub Beránek, who helped me understand the josh sync better.
 - Jieyou Xu, I don't know but I just want to say thanks :3
 - The infra team.
