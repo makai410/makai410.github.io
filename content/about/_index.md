@@ -16,11 +16,11 @@ comment = false
 reaction = false
 +++
 
-Hi! I'm Makai (he/him).
+Hi! I'm Makai (he/they).
 
 I write code for the Rust compiler, currently working on [StableMIR](https://github.com/rust-lang/project-stable-mir).
 
-I love open source. I am a [GSoC'25 contributor @ Rust Foundation](https://summerofcode.withgoogle.com/programs/2025/projects/3y9x5X8O).
+I love open source. I am a [GSoC'25 contributor @ The Rust Foundation](https://summerofcode.withgoogle.com/programs/2025/projects/3y9x5X8O).
 
 ## Favorites
 
