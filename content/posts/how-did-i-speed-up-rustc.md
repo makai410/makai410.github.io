@@ -151,13 +151,11 @@ This attempt was implemented in both [rust-lang/rust#109615](https://github.com/
 while both showed a *regression* in the perf results.
 
 I think directly looking at the generated MIR could help triage the problem.
-And I have to say, the moment I look at it, I found three problems [^2]:
 - every 
 - [godbolt](https://godbolt.org/z/nvaWza9WE)
 
-
+TODO!!
 
 [^1]: [rust-lang/rust#106875](https://github.com/rust-lang/rust/issues/106875)
-[^2]: [“我一进店就发现三个问题” ("The moment I walked into the shop, I found three problems.")](https://www.bilibili.com/video/BV11hjh6gEVS/?share_source=copy_web&vd_source=928d170c8684db8a8c05fb13fb92bd23)
 
 first impl of concatenated string: https://godbolt.org/z/8vhYxo9b7
