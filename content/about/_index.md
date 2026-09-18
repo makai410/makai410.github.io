@@ -31,4 +31,4 @@ I listen to [ZUTOMAYO](https://zutomayo.net). I am addicted to bass.
 {{ collection(file="zutomayo.toml") }}
 
 I'm a [chunithm](https://chunithm.sega.com/) enjoyer.
-<div align="left"><img src="/assets/chunithm.jpg" width="40%" alt="hello" title="this is a title"></div>
+<div align="left"><img src="/assets/chunithm.jpg" width="80%" alt="hello" title="this is a title"></div>
