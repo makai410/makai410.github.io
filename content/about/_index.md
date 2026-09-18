@@ -18,12 +18,17 @@ reaction = false
 
 Hi! I'm Makai (he/they).
 
-I write code for the Rust compiler, currently working on [rustc_public](https://github.com/rust-lang/rustc_public).
+[I write some code for the Rust compiler](https://github.com/rust-lang/rust/pulls/makai410).
 
-I love open source. I am a [GSoC'25 contributor @ The Rust Foundation](https://summerofcode.withgoogle.com/programs/2025/projects/3y9x5X8O).
+I'm a team member on [Rustc Public Project Group](https://rust-lang.org/governance/teams/compiler/#team-project-rustc-public).
+
+I participated in [Google Summer of Code 2025](https://summerofcode.withgoogle.com/programs/2025/projects/3y9x5X8O) as a contributor @ The Rust Foundation.
 
 ## Favorites
 
 I listen to [ZUTOMAYO](https://zutomayo.net). I am addicted to bass.
 
 {{ collection(file="zutomayo.toml") }}
+
+I'm a [chunithm](https://chunithm.sega.com/) enjoyer.
+<div align="left"><img src="/assets/chunithm.jpg" width="40%" alt="hello" title="this is a title"></div>
