@@ -1,13 +1,15 @@
-+++
-title = "2023嘉兴高三基础检测卷信息技术压轴题剖析"
-date = "2023-10-03"
+<!-- +++ -->
+<!-- title = "2023嘉兴高三基础检测卷信息技术压轴题剖析" -->
+<!-- date = "2023-10-03" -->
 
-[taxonomies]
-categories = ["zh-cn"]
-tags = [
-    "Algorithm",
-]
-+++
+<!-- [taxonomies] -->
+<!-- categories = ["zh-cn"] -->
+<!-- tags = [ -->
+    <!-- "Algorithm", -->
+<!-- ] -->
+<!-- +++ -->
+
+Archived
 
 ## 前言
 

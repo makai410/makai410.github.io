@@ -1,14 +1,15 @@
-+++
-title = "浅析一下Java FFM API(Project Panama)"
-date = "2023-08-05"
+<!-- +++ -->
+<!-- title = "浅析一下Java FFM API(Project Panama)" -->
+<!-- date = "2023-08-05" -->
 
-[taxonomies]
-categories = ["zh-cn"]
-tags = [
-    "JVM",
-]
+<!-- [taxonomies] -->
+<!-- categories = ["zh-cn"] -->
+<!-- tags = [ -->
+    <!-- "JVM", -->
+<!-- ] -->
 
-+++
+<!-- +++ -->
+Archived
 
 **这篇文章并不是讲如何使用Java FFM API，而是浅谈其背后的实现原理。**
 
