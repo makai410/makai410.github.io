@@ -1,5 +1,5 @@
 +++
-title = "How to make rustc 94% faster (in some cases)"
+title = "[WIP] How to make rustc 94% faster (in some cases)"
 date = "2026-07-30"
 
 [taxonomies]
