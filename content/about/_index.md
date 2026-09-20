@@ -20,9 +20,9 @@ Hi! I'm Makai (he/they).
 
 [I write some code for the Rust compiler](https://github.com/rust-lang/rust/pulls/makai410).
 
-I'm a team member on [Rustc Public Project Group](https://rust-lang.org/governance/teams/compiler/#team-project-rustc-public).
+I'm a team member of the [Rustc Public Project Group](https://rust-lang.org/governance/teams/compiler/#team-project-rustc-public).
 
-I participated in [Google Summer of Code 2025](https://summerofcode.withgoogle.com/programs/2025/projects/3y9x5X8O) as a contributor @ The Rust Foundation.
+I participated in [Google Summer of Code 2025](https://summerofcode.withgoogle.com/programs/2025/projects/3y9x5X8O) as a contributor @ Rust Foundation.
 
 ## Favorites
 
