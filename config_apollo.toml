@@ -1,6 +1,6 @@
 title = "Makai"
 
-base_url = "https://makai410.dev"
+base_url = "https://blog.makai410.dev"
 
 theme = "apollo"
 
@@ -25,24 +25,24 @@ highlight_theme = "OneHalfDark"
 use_cdn = false
 theme = "dark"
 fancy_code = true
-dynamic_note = true           # a note that can be toggled
+dynamic_note = true                 # a note that can be toggled
 mathjax = true
 mathjax_dollar_inline_enable = true
 
 menu = [
-    { name = "/posts[English]", url = "/english", weight = 1},
-    { name = "/posts[Chinese]", url = "/chinese", weight = 2 },
-    { name = "/about", url = "/about", weight = 3 },
-    { name = "/tags", url = "/tags", weight = 4 },
+  { name = "/posts[English]", url = "/english", weight = 1 },
+  { name = "/posts[Chinese]", url = "/chinese", weight = 2 },
+  { name = "/about", url = "/about", weight = 3 },
+  { name = "/tags", url = "/tags", weight = 4 },
 ]
 
 socials = [
-    { name = "hachyderm", url = "https://hachyderm.io/@makai410", icon = "mastodon" },
-    { name = "github", url = "https://github.com/makai410/", icon = "github" },
+  { name = "hachyderm", url = "https://hachyderm.io/@makai410", icon = "mastodon" },
+  { name = "github", url = "https://github.com/makai410/", icon = "github" },
 ]
 
 stylesheets = [
-    # "custom.css"    # at /static/custom.css
+  # "custom.css"    # at /static/custom.css
 ]
 
 [extra.analytics]
