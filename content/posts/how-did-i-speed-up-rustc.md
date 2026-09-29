@@ -12,6 +12,7 @@ tags = [
 ]
 +++
 
+# NOTE: this optimization was reverted due to derive macro silliness.
 For those who suspect the title is a scam, I'm going to destroy your question with this chart:
 
 <div align="left"><img src="/how-to-speed-up-rustc/summary.png" width="100%" alt="summary.png" title="hi"></div>
