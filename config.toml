@@ -5,7 +5,7 @@
 #
 #=========================================================================================
 
-base_url = "https://makai410.dev"
+base_url = "https://blog.makai410.dev"
 title = "Makaiです"
 description = ""
 default_language = "en"
@@ -15,7 +15,9 @@ compile_sass = true
 minify_html = false # Keep this false, as it may cause issues with some styles
 build_search_index = false # Keep this false, search is temporarily unsupported
 generate_feeds = false # Whether to generate a feed file in root, read docs for more info about rss feed
-feed_filenames = ["feed.xml"] # "feed.xml" | "atom.xml" | "rss.xml", read docs for more info
+feed_filenames = [
+  "feed.xml",
+] # "feed.xml" | "atom.xml" | "rss.xml", read docs for more info
 taxonomies = [{ name = "tags" }, { name = "categories" }]
 
 [markdown]
@@ -49,14 +51,14 @@ sections = [
 blog_section_path = "/posts"
 
 back_link_text = "Back" # Text of the back button
-force_theme = false # false | "light" | "dark"
+force_theme = false     # false | "light" | "dark"
 
 footer_copyright = "© 2025 Makai"
-footer_credits = true # Whether to show "Built with zola and serene" in footer
+footer_credits = true             # Whether to show "Built with zola and serene" in footer
 
 not_found_error_text = "404 Not Found"
 not_found_recover_text = "« back to home »"
 
-reaction = false # Whether to enable anonymous emoji reactions (Note: You need to set up a working api endpoint to enable this feature)
-reaction_align = "right" # "left" | "center" | "right"
+reaction = false                                       # Whether to enable anonymous emoji reactions (Note: You need to set up a working api endpoint to enable this feature)
+reaction_align = "right"                               # "left" | "center" | "right"
 reaction_endpoint = "https://example.com/api/reaction"
